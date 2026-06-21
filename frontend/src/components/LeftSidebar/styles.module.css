@@ -1,0 +1,638 @@
+/* ── Sidebar shell ─────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-faint);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Logo / header ─────────────────────────────────────── */
+.header {
+  height: var(--titlebar-h);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.logo {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.appName {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ── Section panels ─────────────────────────────────────── */
+.panels {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 8px;
+}
+
+/* ── Section header ─────────────────────────────────────── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px 8px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: background var(--t-fast);
+  position: relative;
+}
+
+.sectionHeader:hover {
+  background: var(--bg-hover);
+}
+
+.sectionHeader.active {
+  border-bottom-color: var(--border-faint);
+}
+
+.sectionIcon {
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.sectionTitle {
+  flex: 1;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+
+.sectionHeader:hover .sectionActions {
+  opacity: 1;
+}
+
+.iconBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-xs);
+  color: var(--text-muted);
+  font-size: 14px;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.iconBtn:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.chevron {
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform var(--t-normal);
+  transform: rotate(0deg);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+/* ── Section body ─────────────────────────────────────── */
+.sectionBody {
+  overflow: hidden;
+}
+
+/* ── Brainstorm settings panel ────────────────────────────── */
+.bsSettings {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 8px 10px 4px;
+  padding: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.bsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bsLabel {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bsChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.bsChip {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+}
+
+.bsChip:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+
+.bsChipOn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.bsChipOn:hover {
+  color: #fff;
+}
+
+.bsStepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bsStepBtn {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-md);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bsStepBtn:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+
+.bsStepBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bsCount {
+  min-width: 18px;
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bsHint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Brainstorm ideas ─────────────────────────────────────── */
+.ideaInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 10px;
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  transition: border-color var(--t-fast);
+}
+
+.ideaInput:focus-within {
+  border-color: var(--accent-border);
+}
+
+.ideaInput input {
+  flex: 1;
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+}
+
+.ideaInput input::placeholder {
+  color: var(--text-muted);
+}
+
+.addBtn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 16px;
+  border-radius: var(--r-xs);
+  transition: color var(--t-fast);
+  flex-shrink: 0;
+}
+
+.addBtn:hover { color: var(--accent); }
+
+.ideaList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px 4px;
+}
+
+.ideaCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: var(--r-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-faint);
+  transition: border-color var(--t-fast), background var(--t-fast);
+  group: ideaCard;
+}
+
+.ideaCard:hover {
+  border-color: var(--border-subtle);
+  background: var(--bg-hover);
+}
+
+.ideaDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.6;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.ideaText {
+  flex: 1;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.ideaDelete {
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  border-radius: var(--r-xs);
+  flex-shrink: 0;
+  transition: opacity var(--t-fast), color var(--t-fast), background var(--t-fast);
+}
+
+.ideaCard:hover .ideaDelete {
+  opacity: 1;
+}
+
+.ideaDelete:hover {
+  color: var(--error);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.emptyHint {
+  padding: 12px 14px;
+  font-size: var(--fs-xs);
+  color: var(--text-disabled);
+  text-align: center;
+  font-style: italic;
+}
+
+/* ── Topics ─────────────────────────────────────── */
+.topicInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 10px;
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  transition: border-color var(--t-fast);
+}
+
+.topicInput:focus-within { border-color: var(--accent-border); }
+
+.topicInput input {
+  flex: 1;
+  font-size: var(--fs-sm);
+}
+
+.topicList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 8px 6px;
+}
+
+.topicItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t-fast);
+  border: 1px solid transparent;
+}
+
+.topicItem:hover {
+  background: var(--bg-hover);
+}
+
+.topicItem.topicActive {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+}
+
+.topicBullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+  transition: background var(--t-fast);
+}
+
+.topicItem.topicActive .topicBullet {
+  background: var(--accent);
+}
+
+/* Replaces the bullet while the idea has a LIVE auto run — a small spinning ring. */
+.topicBulletRunning {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--accent);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: itemSpin 0.7s linear infinite;
+}
+
+.topicName {
+  flex: 1;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: color var(--t-fast);
+}
+
+/* Loading icon on a conversation entry whose chat is currently generating
+   (incl. streams running in the background after the user switched away). */
+@keyframes itemSpin {
+  to { transform: rotate(360deg); }
+}
+
+.itemSpinner {
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  margin-left: 4px;
+  border: 1.5px solid var(--accent, var(--text-muted));
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: itemSpin 0.7s linear infinite;
+}
+
+.topicItem.topicActive .topicName {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.topicDelete {
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  border-radius: var(--r-xs);
+  flex-shrink: 0;
+  transition: opacity var(--t-fast), color var(--t-fast);
+}
+
+.topicItem:hover .topicDelete { opacity: 1; }
+.topicDelete:hover { color: var(--error); }
+
+/* ── Divider ─────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--border-faint);
+  margin: 4px 0;
+}
+
+.ideaCardClickable {
+  cursor: pointer;
+}
+
+.ideaCardActive {
+  border-color: var(--accent-border) !important;
+  background: var(--accent-dim) !important;
+}
+
+.draftBadge {
+  margin-right: 5px;
+  font-size: 10px;
+}
+
+/* ── Promote-to-idea button ─────────────────────────── */
+.ideaPromote {
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  border-radius: var(--r-xs);
+  flex-shrink: 0;
+  transition: opacity var(--t-fast), color var(--t-fast), background var(--t-fast);
+}
+
+.ideaCard:hover .ideaPromote {
+  opacity: 1;
+}
+
+.ideaPromote:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* ── Domains ─────────────────────────────────────── */
+.domainModeRow {
+  display: flex;
+  gap: 6px;
+  margin: 8px 10px;
+}
+
+.domainModeBtn {
+  flex: 1;
+  padding: 7px 8px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+}
+
+.domainModeBtn:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+  color: var(--text-primary);
+}
+
+.domainModeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.domainCheck {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ── Context menu ─────────────────────────────────── */
+.ctxMenu {
+  position: fixed;
+  z-index: 150;
+  min-width: 190px;
+  padding: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.ctxItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  text-align: left;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.ctxItem:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ctxItemDanger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--error);
+}
+
+/* ── Footer (settings) ─────────────────────────────── */
+.footer {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-faint);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.footerIconBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background var(--t-fast);
+}
+
+.footerIconBtn:hover {
+  background: var(--bg-hover);
+}
+
+.footerBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.footerBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── Auto-run launcher button ───────────────────────── */
+.autoRunBtn {
+  margin: 8px 12px 0;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  color: var(--accent-hover);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-align: left;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.autoRunBtn:hover { background: var(--accent); color: #fff; }

@@ -1,0 +1,120 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+.title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sub {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.warn {
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: var(--error);
+  font-size: var(--fs-xs);
+}
+
+.label {
+  display: block;
+  margin: 14px 0 4px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.topic {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  resize: vertical;
+}
+
+.topic:focus { outline: none; border-color: var(--accent-border); }
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+.field input {
+  padding: 6px 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+}
+
+.field input:focus { outline: none; border-color: var(--accent-border); }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.cancel {
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  transition: background var(--t-fast);
+}
+
+.cancel:hover { background: var(--bg-hover); }
+
+.start {
+  padding: 7px 16px;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: opacity var(--t-fast);
+}
+
+.start:disabled { opacity: 0.45; cursor: not-allowed; }
+.start:not(:disabled):hover { opacity: 0.9; }

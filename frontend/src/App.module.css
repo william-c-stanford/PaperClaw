@@ -1,0 +1,73 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.divider {
+  width: 8px;
+  margin: 0 -2px;          /* widen the hit area without eating layout space */
+  flex-shrink: 0;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;       /* required for pointer-capture dragging */
+  z-index: 5;
+}
+
+.dividerGrip {
+  width: 2px;
+  height: 40px;
+  border-radius: 99px;
+  background: var(--border-default);
+  transition: background var(--t-fast), height var(--t-fast);
+  pointer-events: none;
+}
+
+.divider:hover .dividerGrip,
+.divider:active .dividerGrip {
+  background: var(--accent);
+  height: 64px;
+}
+
+.feedbackFab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: opacity var(--t-fast);
+}
+
+.feedbackFab:hover { opacity: 0.9; }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 70vw;
+  padding: 9px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  z-index: 200;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,164 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Backgrounds — dark (default) */
+  --bg-base:     #111114;
+  --bg-surface:  #17171c;
+  --bg-elevated: #1e1e25;
+  --bg-hover:    #26262f;
+  --bg-active:   #2d2d38;
+  --bg-input:    #1c1c22;
+
+  /* Borders */
+  --border-faint:   #24242e;
+  --border-subtle:  #2d2d38;
+  --border-default: #3a3a48;
+  --border-strong:  #4e4e64;
+
+  /* Text — brightened for readability */
+  --text-primary:   #f0f0f8;
+  --text-secondary: #b0b0c8;
+  --text-muted:     #7a7a96;
+  --text-disabled:  #54546a;
+
+  /* Accent — purple/violet (research feel) */
+  --accent:          #8b7af8;
+  --accent-hover:    #a193ff;
+  --accent-dim:      rgba(139, 122, 248, 0.18);
+  --accent-border:   rgba(139, 122, 248, 0.4);
+
+  /* Semantic */
+  --success:   #4ade80;
+  --warning:   #fbbf24;
+  --error:     #f87171;
+  --info:      #60a5fa;
+
+  /* Resource type colors */
+  --type-paper:   #a78bfa;
+  --type-link:    #60a5fa;
+  --type-dataset: #34d399;
+  --type-code:    #fbbf24;
+
+  /* Layout */
+  --sidebar-w:   252px;
+  --resources-w: 296px;
+  --titlebar-h:  32px;
+
+  /* Radius */
+  --r-xs: 3px;
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+
+  /* Transitions */
+  --t-fast:   120ms ease;
+  --t-normal: 200ms ease;
+
+  /* Fonts */
+  --font-ui:   system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+
+  /* Font sizes */
+  --fs-xs:  11px;
+  --fs-sm:  12px;
+  --fs-md:  13px;
+  --fs-base: 14px;
+  --fs-lg:  16px;
+  --fs-xl:  20px;
+  --fs-2xl: 24px;
+}
+
+/* ── Light theme ─────────────────────────────────────── */
+:root[data-theme='light'] {
+  --bg-base:     #f7f7fa;
+  --bg-surface:  #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover:    #eeeef4;
+  --bg-active:   #e4e4ee;
+  --bg-input:    #f2f2f7;
+
+  --border-faint:   #e8e8f0;
+  --border-subtle:  #dcdce8;
+  --border-default: #c8c8da;
+  --border-strong:  #a8a8c0;
+
+  --text-primary:   #1a1a28;
+  --text-secondary: #4a4a62;
+  --text-muted:     #80809a;
+  --text-disabled:  #b4b4c8;
+
+  --accent:          #6a55e8;
+  --accent-hover:    #5742d4;
+  --accent-dim:      rgba(106, 85, 232, 0.1);
+  --accent-border:   rgba(106, 85, 232, 0.35);
+
+  --success:   #16a34a;
+  --warning:   #d97706;
+  --error:     #dc2626;
+  --info:      #2563eb;
+
+  --type-paper:   #7c3aed;
+  --type-link:    #2563eb;
+  --type-dataset: #059669;
+  --type-code:    #d97706;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* Selection */
+::selection { background: var(--accent-dim); color: var(--text-primary); }
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}

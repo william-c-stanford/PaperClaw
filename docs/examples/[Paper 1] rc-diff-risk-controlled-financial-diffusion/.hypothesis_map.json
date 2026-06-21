@@ -1,0 +1,30 @@
+{
+  "ideaId": "1673c4af5696",
+  "nodes": [
+    {
+      "id": "H1",
+      "statement": "A diffusion model trained with differentiable stylized-fact losses reduces tail-index error in generated financial returns compared with the same diffusion model without those losses.",
+      "rationale": "Tail fidelity is central to risk-relevant financial scenario generation.",
+      "test": null,
+      "status": "refuted",
+      "children": []
+    },
+    {
+      "id": "H2",
+      "statement": "Conditioning a financial diffusion model on target volatility produces generated return paths whose realized volatility is monotonic in the requested volatility level.",
+      "rationale": "Faithful volatility control is a core requirement for auditable stress scenarios.",
+      "test": null,
+      "status": "supported",
+      "children": []
+    },
+    {
+      "id": "H3",
+      "statement": "Signature-based path metrics identify temporal-dependence failures in generated financial time series that are not detected by marginal return-distribution metrics.",
+      "rationale": "The idea depends on evaluating path-level fidelity beyond pointwise realism.",
+      "test": null,
+      "status": "supported",
+      "children": []
+    }
+  ],
+  "generatedAt": 1781631406.058916
+}

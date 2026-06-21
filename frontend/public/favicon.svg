@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="claw" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#E11D48"/>
+    </linearGradient>
+  </defs>
+  <!-- warm paper tile -->
+  <rect width="64" height="64" rx="14" fill="#FFEDD5"/>
+  <!-- the research paper, slightly tilted -->
+  <g transform="rotate(7 30 34)">
+    <rect x="16" y="16" width="26" height="34" rx="3" fill="#fff" stroke="#1F2937" stroke-width="2.2"/>
+    <line x1="21" y1="24" x2="37" y2="24" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+    <line x1="21" y1="29" x2="37" y2="29" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+    <line x1="21" y1="34" x2="33" y2="34" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+    <!-- coral bar chart -->
+    <rect x="21" y="42" width="3.5" height="4" fill="#E11D48"/>
+    <rect x="27" y="39" width="3.5" height="7" fill="#FB923C"/>
+    <rect x="33" y="41" width="3.5" height="5" fill="#E11D48"/>
+  </g>
+  <!-- friendly claw gripping the top edge -->
+  <g>
+    <path d="M44 22 L28 14" stroke="url(#claw)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M44 22 L31 30" stroke="url(#claw)" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="45" cy="22" r="9" fill="url(#claw)"/>
+  </g>
+</svg>

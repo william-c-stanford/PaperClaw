@@ -1,0 +1,103 @@
+{
+  "ideaId": "1673c4af5696",
+  "title": "Stylized-Fact Preserving Financial Diffusion with Distributional Risk Controls",
+  "objective": "Test whether stylized-fact losses and distributional risk controls improve financial diffusion models for realistic, auditable stress-scenario generation.",
+  "datasets": [
+    {
+      "name": "S&P 500 / Yahoo Finance OHLCV",
+      "role": "primary",
+      "granularity": "daily",
+      "preprocessing": [
+        "Compute log returns from adjusted close prices.",
+        "Create fixed-length rolling windows, e.g. 64 or 128 trading days.",
+        "Split chronologically into train, validation, and held-out test regimes.",
+        "Normalize using training-period statistics only to avoid leakage."
+      ]
+    },
+    {
+      "name": "Crisis/regime slices",
+      "role": "stress-validation subset",
+      "examples": ["2008 financial crisis", "2020 COVID crash", "2022 inflation/rate shock"],
+      "purpose": "Check whether controls remain faithful outside calm market conditions."
+    }
+  ],
+  "models": {
+    "proposed": "Conditional financial diffusion with stylized-fact losses and risk-control conditioning.",
+    "ablations": [
+      "Diffusion without stylized-fact losses",
+      "Diffusion without risk-control conditioning",
+      "Diffusion with individual stylized-fact losses removed one at a time"
+    ],
+    "baselines": [
+      "TimeGAN for sequence generation",
+      "C-RNN-GAN for recurrent adversarial generation",
+      "Sig-Wasserstein GAN as the closest path-signature baseline",
+      "CoFinDiff as the closest controllable financial diffusion baseline if reproducible"
+    ]
+  },
+  "hypothesisTests": [
+    {
+      "hypothesisId": "H1",
+      "claim": "Stylized-fact losses improve preservation of heavy tails, volatility clustering, and cross-asset dependence.",
+      "independentVariable": "Training objective: diffusion with vs. without stylized-fact losses.",
+      "primaryMetrics": [
+        "Tail-index error using Hill estimator or comparable tail estimator",
+        "Absolute-return autocorrelation error across multiple lags",
+        "Correlation-matrix distance, e.g. Frobenius distance or eigenvalue-spectrum error"
+      ],
+      "secondaryMetrics": ["KS/Wasserstein distance on returns", "Leverage-effect error", "Volatility distribution distance"],
+      "successCriterion": "Proposed model significantly reduces primary stylized-fact errors versus the ablated diffusion and is competitive with or better than GAN baselines.",
+      "statisticalCheck": "Bootstrap test windows and report confidence intervals for metric differences."
+    },
+    {
+      "hypothesisId": "H2",
+      "claim": "Risk controls produce monotonic and calibrated changes in generated volatility, VaR/ES, and drawdown.",
+      "independentVariable": "Requested control level, e.g. low/medium/high volatility or target drawdown quantile.",
+      "primaryMetrics": [
+        "Spearman correlation between requested and realized volatility",
+        "Calibration error for VaR and expected shortfall targets",
+        "Max-drawdown target error"
+      ],
+      "secondaryMetrics": ["Control disentanglement error", "Failure rate for infeasible or artifact-like paths"],
+      "successCriterion": "Realized risk metrics are monotonic in requested control levels and calibrated within pre-specified tolerance bands on held-out periods.",
+      "statisticalCheck": "Use monotonic trend tests plus bootstrap confidence intervals over generated samples and test windows."
+    },
+    {
+      "hypothesisId": "H3",
+      "claim": "Signature-based evaluation reveals path-level failures missed by marginal metrics.",
+      "independentVariable": "Evaluation metric family: marginal distribution metrics vs. path/signature metrics.",
+      "primaryMetrics": [
+        "Sig-Wasserstein distance between real and generated path distributions",
+        "Rank disagreement between marginal-only and path-level evaluations",
+        "Detection rate on synthetic counterexamples with matched marginals but broken temporal ordering"
+      ],
+      "secondaryMetrics": ["Downstream forecasting utility", "Stress-test ranking agreement with historical regimes"],
+      "successCriterion": "Signature metrics identify temporal-dependence failures in cases where marginal metrics remain similar.",
+      "statisticalCheck": "Construct controlled perturbations and compare metric sensitivity across repeated samples."
+    }
+  ],
+  "mainExperiment": {
+    "setup": "Train all models on identical chronological training windows and evaluate on held-out windows plus stress-regime slices.",
+    "comparison": "Proposed model vs. baselines and ablations on both realism and controllability.",
+    "primaryTable": [
+      "Tail-index error",
+      "Absolute-return autocorrelation error",
+      "Correlation-matrix distance",
+      "VaR/ES calibration error",
+      "Max-drawdown calibration error",
+      "Sig-Wasserstein distance"
+    ],
+    "targetOutcome": "Lower stylized-fact and path-level errors than ablated diffusion, comparable or better realism than strong baselines, and uniquely monotonic calibrated risk controls."
+  },
+  "sanityChecks": [
+    "Compare against historical bootstrap/resampling to ensure the generator beats simple empirical baselines.",
+    "Verify no train-test leakage from normalization, constituent selection, or rolling-window construction.",
+    "Inspect generated OHLCV-derived paths for impossible prices, extreme arbitrage artifacts, or degenerate volatility collapse.",
+    "Run multiple random seeds and report mean plus confidence intervals."
+  ],
+  "expectedRisks": [
+    "CoFinDiff may not have a reproducible implementation; use published protocol or mark as partial baseline.",
+    "Tail-index estimates can be noisy; report sensitivity to threshold choice.",
+    "Controls may trade off realism against calibration; report Pareto curves rather than a single scalar only."
+  ]
+}

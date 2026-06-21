@@ -1,0 +1,28 @@
+_Results from real executed code._
+
+> ⚠️ **Data note:** Used 16 of the planned ~400-500 S&P 500 constituents (top-liquidity names across tech, finance, healthcare, energy, staples, consumer) so 3-seed * 2-model training + 1024-path DDPM sampling fit in minutes on a shared GPU. Same Yahoo Finance OHLCV source and same time range as planned; only the asset breadth is reduced.
+
+## Experiment 1: H1_styl_loss_ablation_diffusion
+**Setup:** 1D-UNet DDPM (T=200 diffusion steps, 25 epochs, batch=128, lr=2e-4, 4 residual blocks at width 96) trained on rolling 64-day log-return windows of 16 liquid S&P 500 names (AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA, JPM, V, JNJ, WMT, XOM, CVX, PG, KO, HD) from Yahoo Finance, 2010-01-01 to 2024-12-31 (3173 intersected daily rows). Time split: train < 2022-01-01, test >= 2022-01-01 (2358 train windows, 689 held-out test windows). DiffNoStyl trains pure epsilon-prediction MSE. DiffStyl adds three differentiable losses computed on the model's x0_hat = (x_t - sqrt(1-alpha_bar_t)*eps_hat)/sqrt(alpha_bar_t) (denormalized to return space) for training steps with t<0.6*T_diff: (i) per-asset Hill tail-index match; (ii) ACF-of-|r| match at lags 1,2,5; (iii) cross-asset correlation matrix Frobenius match. SeqGAN is a TimeGAN-flavored GRU sequence GAN reference baseline. Metrics computed on held-out test windows vs 1024 generated paths per (method, seed); averaged over 3 seeds; tail-index error stratified into 10 chunks per asset for paired Wilcoxon.
+**Results:**
+
+| Metric | DiffNoStyl | DiffStyl | SeqGAN |
+|---|---|---|---|
+| tail_index_err | 1.448 | 2.396 | 92.61 |
+| tail_index_err_sem | 0.01095 | 0.007847 | — |
+| acf_abs_err | 0.03196 | 0.03126 | 0.4509 |
+| corr_matrix_dist | 1.71 | 5.555 | 10.35 |
+| sig_wasserstein | 0.001056 | 0.01877 | 0.01163 |
+| rel_reduction_vs_base | — | -0.6543 | — |
+| wilcoxon_p_one_sided_base_gt_styl | — | 1 | — |
+
+**Hypothesis:** H1: differentiable stylized-fact losses (Hill tail-index, |r|-ACF, cross-asset correlation) reduce tail-index error of generated financial return paths versus the same diffusion model trained without them. — **Verdict:** REFUTED
+**Observations:** Across 3 seeds on 16 S&P 500 tickers (2010-2024, train<2022-01-01, test>=2022-01-01), DiffStyl achieved a mean Hill tail-index error of 2.396 (SEM 0.008) vs DiffNoStyl 1.448 (SEM 0.011) - a 65.4% relative INCREASE rather than the planned 2-5% reduction; paired Wilcoxon one-sided (base>styl) p=1.0. Secondary metrics also worsened: correlation-matrix Frobenius distance grew from 1.71 to 5.55, and truncated Sig-Wasserstein distance grew ~18x (0.0011 -> 0.0188). Only the |r|-ACF error was essentially unchanged (0.0320 vs 0.0313). The SeqGAN reference is far worse on every metric (tail err ~92), confirming the diffusion baselines themselves are the relevant comparison. Interpretation: applying moment-matching auxiliary losses to the model's x0_hat is harmful here because at moderate-to-high diffusion noise levels x0_hat is a biased low-SNR estimate of the clean path, so matching its empirical Hill/ACF/correlation statistics to those of the true x0 sends a misleading gradient that pulls the score off the correct denoising trajectory. The naive operationalisation predicted by H1's literal reading ('add differentiable stylized-fact losses') does not deliver the claimed improvement under this preregistered design; a faithful re-test would require auxiliary losses computed on actual generated samples (e.g. few-step DDIM rollouts) or restricted to very low t. The acceptance criterion (consistent 2-5% reduction with paired significance) is unambiguously REFUTED.
+**Status:** NEGATIVE
+
+## Figures
+![Held-out evaluation on S&P 500 test windows (2022-2024). Bars show 3-seed means for DiffNoStyl, DiffStyl, and SeqGAN across four metrics. Tail-index uses a log scale because SeqGAN's value is two orders of magnitude larger. DiffStyl is consistently worse than DiffNoStyl on tail-index, correlation distance, and Sig-Wasserstein, refuting H1.](fig1.png)
+*Held-out evaluation on S&P 500 test windows (2022-2024). Bars show 3-seed means for DiffNoStyl, DiffStyl, and SeqGAN across four metrics. Tail-index uses a log scale because SeqGAN's value is two orders of magnitude larger. DiffStyl is consistently worse than DiffNoStyl on tail-index, correlation distance, and Sig-Wasserstein, refuting H1.*
+
+## Summary
+On 16 liquid S&P 500 tickers (2010-2024, time-split test from 2022) across 3 seeds, adding Hill tail-index, |r|-ACF, and cross-asset correlation differentiable losses to a 1D-UNet DDPM (computed on x0_hat) INCREASED mean held-out Hill tail-index error from 1.448 to 2.396 (+65.4%, paired Wilcoxon one-sided p=1.0) rather than reducing it by the planned 2-5%. Correlation distance and Sig-Wasserstein also worsened; |r|-ACF was essentially flat. A SeqGAN reference baseline was far worse than either diffusion variant. H1 is REFUTED under this preregistered design - consistent with auxiliary losses receiving a misleading gradient signal from low-SNR x0_hat estimates at moderate-to-high noise.

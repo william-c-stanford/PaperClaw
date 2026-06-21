@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+build/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/out/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local agent guidance (contains machine-specific server paths)
+AGENTS.md
+CLAUDE.md
+
+# Local env / secrets (PAPERCLAW_API_KEY, PAPERCLAW_CHAT_AGENT, …)
+.env
+
+# PaperClaw default save dir (PAPERCLAW_HOME)
+saves/

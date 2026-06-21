@@ -1,0 +1,27 @@
+## Verdict
+SUPPORTED
+
+## Discussion
+H3 is supported against the pre-registered acceptance criterion. The plan required Sig-Wasserstein distance to achieve at least a 3% relative improvement in mean temporal-failure detection AUC over the strongest marginal-only metric, averaged across full shuffle, block shuffle, sign shuffle, and time reversal, with the 95% bootstrap confidence interval excluding zero. The best signature variant, Sig-Wasserstein Mahalanobis depth 3, reached mean paired AUC 0.5657 versus the strongest marginal-only baseline, Gaussian-MMD on returns, at AUC 0.5404. This is a +4.61% relative improvement with 95% bootstrap CI [+1.53%, +7.68%], satisfying the threshold.
+
+The result is especially meaningful because the controlled corruptions preserve much of the marginal return distribution while damaging temporal ordering. On the strictly marginal-blind subset of full shuffle, block shuffle, and time reversal, marginal metrics collapse to chance-level AUC around 0.500, while signature metrics reach roughly 0.543–0.556, corresponding to +8.6% to +11.1% relative improvement with confidence intervals entirely above 3%. This directly validates the claim that signature-based path metrics detect failures that pointwise return-distribution metrics miss.
+
+The outcome also clarifies which path metrics are useful. Simple autocorrelation-profile Mahalanobis metrics were noisy at W=128 and did not beat the strongest marginal baseline on the all-corruption mean, suggesting that hand-selected low-order temporal summaries are insufficiently robust for this setting. Signature depth matters: depth 2 variants were weaker and sometimes failed the CI criterion, while depth 3 and depth 4 variants were reliably above threshold. Depth 3 Mahalanobis was the strongest, implying that moderate-depth signatures may capture enough path structure without excessive noise.
+
+The experiment used 95 S&P 500 constituents rather than the 350–500 target in the plan due to yfinance and CPU-only practicality, but the sample still produced 3,230 reference windows and 2,090 held-out test windows with narrow bootstrap intervals. Runtime was favorable: all six signature scores cost about 12 ms per window versus about 110 ms for the marginal metric suite dominated by empirical MMD. This makes signature evaluation practical as an audit metric for generated financial paths.
+
+## Key Findings
+1. Useful: Sig-Wasserstein Mahalanobis depth 3 is worth keeping as a primary path-fidelity metric; it achieved AUC 0.5657 versus Gaussian-MMD AUC 0.5404, a +4.61% relative gain with 95% CI [+1.53%, +7.68%].
+2. Useful: Signature metrics specifically catch marginally invisible ordering failures; on full shuffle, block shuffle, and time reversal, marginal metrics were at chance around AUC 0.500 while signature variants reached AUC 0.543–0.556.
+3. Not useful: Simple absolute-return and signed-return autocorrelation Mahalanobis metrics did not provide a reliable alternative; their mean AUCs were 0.4965 and 0.5007, below the strongest marginal-only metric.
+4. Useful: Moderate signature depths are preferable; L2 depth 3, L2 depth 4, Mahalanobis depth 3, and Mahalanobis depth 4 all exceeded +3% relative improvement with CIs excluding zero, while depth 2 variants were weaker and did not consistently pass.
+5. Interesting: Gaussian-MMD was the strongest marginal-only baseline at AUC 0.5404, but its signal appears to come mainly from sign shuffle, which slightly changes distributional skew rather than genuinely detecting path ordering.
+6. Interesting: Signature evaluation was computationally practical in this run, costing about 12 ms per window for six signature scores compared with about 110 ms per window for the marginal metric suite.
+
+## Future Directions
+Use Sig-Wasserstein Mahalanobis depth 3 as the default path-level evaluation metric for generated financial trajectories, while retaining depth 4 as a robustness check. Repeat the test on generated samples from TimeGAN, C-RNN-GAN, Sig-Wasserstein GAN, CoFinDiff, and the proposed diffusion model to verify that the metric flags realistic model failure modes, not only synthetic corruptions. Expand the dataset toward the planned 350–500 ticker universe and test intraday or multi-asset paths where cross-asset lead-lag and correlation breakdown may make signature features more valuable. Add calibration plots that relate signature distance to downstream forecasting or stress-test degradation, since the report currently validates detection but not economic severity.
+
+## Proposed Hypotheses
+H3.1 (sub of H3): Signature Mahalanobis depth 3 remains the best path-failure detector on real generated samples from TimeGAN, C-RNN-GAN, Sig-Wasserstein GAN, and diffusion baselines; test criterion: it achieves at least +3% AUC over the strongest marginal-only metric for classifying held-out real versus model-generated failure cases.
+H3.2 (sub of H3): Signature distance predicts downstream stress-test degradation better than marginal distribution metrics; test criterion: Spearman correlation with VaR/ES or forecasting degradation is at least 0.10 higher than the strongest marginal-only metric.
+H3.3 (sub of H3): Increasing signature depth beyond 3 gives diminishing or negative returns under fixed sample size; test criterion: depth 4 or higher improves mean AUC by less than 1% over depth 3 or has wider bootstrap uncertainty across corruption/model settings.

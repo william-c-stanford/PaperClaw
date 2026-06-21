@@ -1,0 +1,35 @@
+[project]
+name = "paperclaw"
+version = "0.67.1"
+description = "PaperClaw — AI-powered multi-platform research application"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+    "anthropic>=0.40",
+    "httpx>=0.24",
+    "markdown2>=2.4",
+    "weasyprint>=61.0",
+    "matplotlib>=3.6",
+    "pypdf>=4.0",
+]
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21", "httpx>=0.24"]
+# Optional deepagents chat editor (PAPERCLAW_CHAT_AGENT=deepagents). Heavy LangChain
+# stack — install with: pip install 'paperclaw[deepagents]'
+deepagents = ["deepagents>=0.6", "langchain-openai>=0.2", "langchain-anthropic>=0.2"]
+
+[project.scripts]
+paperclaw = "paperclaw.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["paperclaw"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
