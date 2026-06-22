@@ -241,9 +241,11 @@ async def send_chat(
         )
         return [user_msg, assistant]
 
-    # /setup_codebase: download a DOMAIN's reference codebase — handled server-side
+    # /setup_codebase: download a DOMAIN's reference codebase — handled server-side.
+    # off-thread: the download/extract is blocking and would freeze the event loop.
     if stripped.lower().startswith(SETUP_CODEBASE_COMMAND):
-        return _setup_codebase_messages(
+        return await asyncio.to_thread(
+            _setup_codebase_messages,
             store, context_id, content,
             stripped[len(SETUP_CODEBASE_COMMAND):].strip(), idea_id, domain_id)
 
@@ -1534,7 +1536,8 @@ async def auto_create_domain(store: Store, settings: LLMSettings, prompt: str) -
     spec = match.group(1) if match else result.text
     name = title_from_spec(spec, prompt[:60])
     domain = store.add_domain(name, spec=spec)
-    _auto_fetch_codebase(store, domain, spec)  # updates domain.json on disk
+    # off-thread: the codebase download/extract is blocking — keep it off the event loop.
+    await asyncio.to_thread(_auto_fetch_codebase, store, domain, spec)  # updates domain.json on disk
     return next((d for d in store.list_domains() if d.id == domain.id), domain)
 
 
@@ -2108,7 +2111,9 @@ async def stream_auto_create_domain_events(
     cb_url = codebase_url_from_spec(spec)
     if cb_url:
         yield {"type": "status", "message": f"Downloading reference codebase {cb_url}…"}
-        files = _auto_fetch_codebase(store, domain, spec)
+        # off-thread: the tarball download + extraction is BLOCKING; running it on the
+        # event loop would freeze every other request (chat, parallel runs) until done.
+        files = await asyncio.to_thread(_auto_fetch_codebase, store, domain, spec)
         domain = next((d for d in store.list_domains() if d.id == domain.id), domain)
         yield {"type": "codebase", "url": cb_url, "files": files,
                "message": (f"⬇ downloaded {files} files" if files

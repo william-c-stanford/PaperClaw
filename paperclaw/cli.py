@@ -2,7 +2,7 @@
 
 Two modes, mirroring the web frontend feature-for-feature:
   - without --backend: runs locally (files under $PAPERCLAW_HOME, config from
-    env vars / .env / settings.json)
+    env vars / .env / settings.yaml)
   - with --backend [URL]: connects to a running backend (URL defaults to
     http://127.0.0.1:8230)
 """

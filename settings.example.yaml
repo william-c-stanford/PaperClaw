@@ -1,0 +1,26 @@
+# PaperClaw configuration — copy this file to `settings.yaml` and fill in your keys.
+# Both the backend and the CLI read it on start (no commands needed). It is git-ignored,
+# so your keys never get committed. It overrides the in-app Settings.
+#
+# Precedence (highest first):
+#   env vars > .env (cwd) > .env ($PAPERCLAW_HOME) > ./settings.yaml > $PAPERCLAW_HOME/settings.yaml
+
+LLM:
+  provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint)
+  base_url: null                # null = the provider default; set for a proxy / self-hosted
+                                #   e.g. https://api.openai.com/v1  or  http://localhost:11434/v1 (Ollama)
+  api_key: ""                   # your key (ANTHROPIC_API_KEY / OPENAI_API_KEY env vars also work)
+  model: claude-opus-4-8        # e.g. claude-opus-4-8, claude-sonnet-4-6, gpt-5.5, …
+
+# Optional — image API for paper figures (intro/method diagrams). Leave api_key empty to
+# disable (PaperClaw then falls back to matplotlib / TikZ figures).
+image_generation:
+  base_url: null                # null = OpenAI images endpoint; set for a proxy
+  api_key: ""
+  model: null                   # e.g. gpt-image-1, dall-e-3
+
+# Optional — OpenAlex key for literature search (domain survey, SOTA, references).
+# Without one, anonymous requests may be rate-limited (surveys return "Found 0 papers").
+academic_search:
+  open_alex:
+    api_key: ""

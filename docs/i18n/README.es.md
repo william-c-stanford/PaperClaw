@@ -102,6 +102,27 @@ flowchart LR
 PaperClaw funciona en dos modos — elige uno (comparten el mismo backend y los datos de `saves/`,
 así que puedes cambiar libremente).
 
+**Configuración más rápida (sin comandos):** copia `settings.example.yaml` a `settings.yaml` en el directorio del proyecto y rellena tu proveedor, modelo y claves de API — tanto el backend como la CLI lo leen al iniciar (tiene prioridad sobre los Ajustes de la app). Es YAML, así que puedes comentar las opciones con `#`:
+
+```yaml
+LLM:
+  provider: anthropic           # anthropic | openai
+  base_url: null                # null = predeterminado del proveedor; para proxy / self-hosted
+  api_key: ""
+  model: claude-opus-4-8
+image_generation:               # opcional — figuras del artículo
+  base_url: null
+  api_key: ""
+  model: null
+academic_search:
+  open_alex:
+    api_key: ""                 # opcional — búsqueda bibliográfica
+```
+
+`settings.yaml` está en git-ignore (contiene tus claves), por lo que nunca se sube al repositorio. (Todavía se lee un `settings.json` heredado.)
+
+> ⚙️ **Configuración completa** — modelo y claves, generación de imágenes, OpenAlex, modo de experimentos, remotos SSH, LaTeX y la comprobación `paperclaw doctor`: consulta la **[guía de configuración del entorno](../environment-guide.md)**.
+
 > [!TIP]
 > **El modo web es la experiencia recomendada** — transmisión en vivo, el grafo de hipótesis, el
 > monitor de experimentos y el visor de PDF integrado, todo en un solo lugar. El **modo CLI**
@@ -110,6 +131,8 @@ así que puedes cambiar libremente).
 ---
 
 ### 🪟 1. Modo web *(recomendado)*
+
+> 📘 **¿Nuevo en la interfaz?** Sigue el **[recorrido por la interfaz web](../web-guide.md)** — cuatro pasos anotados de dominio a artículo, cada uno con su equivalente en CLI.
 
 **Instalar** — backend + frontend:
 
@@ -134,13 +157,15 @@ cd frontend && npm install       # frontend (Node)
 - **🖼️ Generación de imágenes** — API de imágenes opcional al estilo de OpenAI para las figuras del artículo (recurre a matplotlib/TikZ si no se establece).
 - **🩺 Doctor** — un clic comprueba que todo el entorno está listo (LLM, agente de codificación, cadena de herramientas LaTeX, generación de imágenes, OpenAlex).
 
-Las claves se almacenan solo del lado del servidor en `saves/settings.json` (modo `600`) y nunca se
+Las claves se almacenan solo del lado del servidor en `saves/settings.yaml` (modo `600`) y nunca se
 envían al navegador. Sin una clave, la aplicación sigue funcionando y responde con una pista de
 configuración.
 
 **Úsalo** — haz clic en **⚡ Auto run** (en la barra lateral para un tema nuevo, o sobre una idea
 existente) para ir de tema → artículo; obsérvalo en vivo en el banner y explora las pestañas
 🌳 Hypotheses y 📄 Paper. O chatea para construir un dominio, generar ideas y fijar una.
+
+> 📘 **¿Nuevo en la interfaz?** Sigue el **[recorrido por la interfaz web](../web-guide.md)** — cuatro pasos anotados de dominio a artículo, cada uno con su equivalente en CLI.
 
 ---
 
@@ -153,7 +178,7 @@ pip install -e ".[dev]"
 ```
 
 **Configurar** — el modo local lee la configuración con esta prioridad (de mayor a menor):
-**variables de entorno → `.env` (cwd) → `.env` en `$PAPERCLAW_HOME` → `settings.json`**.
+**variables de entorno → `.env` (cwd) → `.env` en `$PAPERCLAW_HOME` → `./settings.yaml` (directorio del proyecto) → `$PAPERCLAW_HOME/settings.yaml`**.
 
 | Clave | Propósito |
 |---|---|
@@ -355,8 +380,11 @@ Despliega el backend en el servidor y accede a él por un túnel SSH — sin nec
 OpenAlex ahora limita por presupuesto las solicitudes anónimas (por IP). Añade una clave de API gratuita
 de OpenAlex en **Ajustes → 📚 Búsqueda académica** (o `OPENALEX_API_KEY`) para un presupuesto dedicado.
 
+**Hice clic en el ⚡ Auto run de arriba a la izquierda pero la interfaz no muestra progreso, ¿adónde fue?**
+El **⚡ Auto run** de la esquina superior izquierda de la barra lateral inicia una ejecución desde un **tema** (equivale a `paperclaw run "tu tema"`) y todavía está en **beta**: su vista de progreso en la app está en desarrollo. La ejecución funciona bien (proceso desacoplado, como cualquier auto run); síguela desde cualquier terminal con `paperclaw status` (y `paperclaw stop` / `paperclaw resume`). Las ejecuciones iniciadas sobre una idea *existente* (el ⚡ Auto run de la barra superior) sí muestran el banner en vivo. Consulta el [recorrido por la interfaz web](../web-guide.md#4-auto-run--topic--paper-on-autopilot).
+
 **¿Mi clave de API está segura?**
-Las claves se almacenan del lado del servidor en `saves/settings.json` (modo `600`) y nunca se envían al
+Las claves se almacenan del lado del servidor en `saves/settings.yaml` (modo `600`) y nunca se envían al
 navegador ni se registran.
 
 **¿Necesito una GPU?**

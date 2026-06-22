@@ -151,6 +151,80 @@ def test_provider_key_fallback(tmp_path, monkeypatch):
     assert settings.api_key == "sk-ant-fallback"
 
 
+def test_project_settings_yaml_overrides_home(tmp_path, monkeypatch):
+    """A settings.yaml in the working directory configures backend+CLI without any
+    commands, and takes precedence over $PAPERCLAW_HOME/settings.yaml."""
+    for k in ("PAPERCLAW_PROVIDER", "PAPERCLAW_MODEL", "PAPERCLAW_API_KEY",
+              "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    home = tmp_path / "home"; home.mkdir()
+    (home / "settings.yaml").write_text(
+        "LLM:\n  provider: anthropic\n  model: home-model\n  api_key: sk-home\n")
+    # the autouse fixture chdir'd us into tmp_path, so this IS ./settings.yaml
+    (tmp_path / "settings.yaml").write_text(
+        "LLM:\n  provider: openai\n  model: proj-model\n  api_key: sk-proj\n")
+    s = load_settings(home)
+    assert s.provider == "openai" and s.model == "proj-model" and s.api_key == "sk-proj"
+
+
+def test_legacy_settings_json_still_read(tmp_path, monkeypatch):
+    """A legacy flat settings.json (JSON is valid YAML) is still honoured when no
+    settings.yaml exists."""
+    import json
+    for k in ("PAPERCLAW_PROVIDER", "PAPERCLAW_MODEL", "PAPERCLAW_API_KEY",
+              "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    home = tmp_path / "home"; home.mkdir()
+    (home / "settings.json").write_text(json.dumps(
+        {"provider": "openai", "model": "legacy", "api_key": "sk-legacy"}))
+    s = load_settings(home)
+    assert s.provider == "openai" and s.model == "legacy" and s.api_key == "sk-legacy"
+
+
+def test_nested_yaml_settings_with_comments(tmp_path, monkeypatch):
+    """settings.yaml groups keys into sub-dicts (LLM / image_generation /
+    academic_search.open_alex), supports # comments, and chat_agent is not a file key."""
+    for k in ("PAPERCLAW_PROVIDER", "PAPERCLAW_MODEL", "PAPERCLAW_API_KEY", "PAPERCLAW_CHAT_AGENT",
+              "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    home = tmp_path / "home"; home.mkdir()
+    (tmp_path / "settings.yaml").write_text(
+        "# my config\n"
+        "LLM:\n"
+        "  provider: openai          # anthropic | openai\n"
+        "  base_url: https://api.example/v1\n"
+        "  api_key: sk-llm\n"
+        "  model: m-1\n"
+        "image_generation:\n"
+        "  base_url: https://img.example/v1\n"
+        "  api_key: sk-img\n"
+        "  model: img-1              # e.g. gpt-image-1\n"
+        "academic_search:\n"
+        "  open_alex:\n"
+        "    api_key: oa-1\n")
+    s = load_settings(home)
+    assert s.provider == "openai" and s.base_url == "https://api.example/v1"
+    assert s.api_key == "sk-llm" and s.model == "m-1"
+    assert s.image_base_url == "https://img.example/v1" and s.image_api_key == "sk-img"
+    assert s.image_model == "img-1" and s.openalex_api_key == "oa-1"
+    assert s.chat_agent == "deepagents"  # always the default — not read from the file
+
+
+def test_save_settings_writes_nested_yaml_without_chat_agent(tmp_path):
+    """save_settings persists the nested YAML layout and never writes chat_agent."""
+    import yaml
+    from paperclaw.config import LLMSettings, save_settings, settings_path
+    save_settings(tmp_path, LLMSettings(provider="openai", api_key="sk-x", model="m",
+                                        openalex_api_key="oa", chat_agent="builtin"))
+    path = settings_path(tmp_path)
+    assert path.name == "settings.yaml"
+    raw = yaml.safe_load(path.read_text())
+    assert set(raw) == {"LLM", "image_generation", "academic_search"}
+    assert raw["LLM"]["api_key"] == "sk-x" and raw["LLM"]["model"] == "m"
+    assert raw["academic_search"]["open_alex"]["api_key"] == "oa"
+    assert "chat_agent" not in raw and "chat_agent" not in raw["LLM"]
+
+
 def test_local_client_auto_research_stream(tmp_path, monkeypatch):
     """`auto` (local) forwards the topic + stop params and streams events through."""
     from paperclaw import service

@@ -1,7 +1,7 @@
 """CLI client backends.
 
 LocalClient  — operates on the local PaperClaw home directly (Store + service);
-               configuration from env vars / .env / settings.json.
+               configuration from env vars / .env / settings.yaml.
 RemoteClient — talks to a running PaperClaw backend over HTTP.
 
 Both return plain dicts (camelCase keys — the wire format) so the CLI treats

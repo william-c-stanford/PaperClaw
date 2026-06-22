@@ -98,6 +98,27 @@ flowchart LR
 PaperClaw runs in two modes — pick one (they share the same backend and `saves/` data, so
 you can switch freely).
 
+**Quickest setup (no commands):** copy `settings.example.yaml` → `settings.yaml` in the project directory and fill in your keys — both the backend and the CLI read it on start (it overrides the in-app Settings). It's YAML, so you can `#`-comment the options:
+
+```yaml
+LLM:
+  provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint)
+  base_url: null                # null = provider default; set for a proxy / self-hosted
+  api_key: ""
+  model: claude-opus-4-8
+image_generation:               # optional — paper figures (empty key = use matplotlib/TikZ)
+  base_url: null
+  api_key: ""
+  model: null                   # e.g. gpt-image-1, dall-e-3
+academic_search:
+  open_alex:
+    api_key: ""                 # optional — avoids OpenAlex anonymous rate-limits
+```
+
+`settings.yaml` is git-ignored (it holds your keys), so it never gets committed. (A legacy `settings.json` is still read.)
+
+> ⚙️ **Full configuration** — model & keys, image generation, OpenAlex, experiment mode, SSH remotes, LaTeX, and the `paperclaw doctor` check: see the **[Environment setup guide](docs/environment-guide.md)**.
+
 > [!TIP]
 > **Web mode is the recommended experience** — live streaming, the hypothesis graph, the
 > experiment monitor, and the in-app PDF viewer, all in one place. **CLI mode** mirrors
@@ -106,6 +127,8 @@ you can switch freely).
 ---
 
 ### 🪟 1. Web mode *(recommended)*
+
+> 📘 **New to the UI?** Follow the **[Web UI walkthrough](docs/web-guide.md)** — four annotated steps from domain to paper, each with its CLI equivalent.
 
 **Install** — backend + frontend:
 
@@ -130,12 +153,14 @@ cd frontend && npm install       # frontend (Node)
 - **🖼️ Image generation** — optional OpenAI-style image API for paper figures (falls back to matplotlib/TikZ when unset).
 - **🩺 Doctor** — one click checks the whole environment is ready (LLM, coding agent, LaTeX toolchain, image gen, OpenAlex).
 
-Keys are stored server-side in `saves/settings.json` (mode `600`) and never sent to the
+Keys are stored server-side in `saves/settings.yaml` (mode `600`) and never sent to the
 browser. Without a key the app still runs and replies with a configuration hint.
 
 **Use it** — click **⚡ Auto run** (sidebar for a fresh topic, or on an existing idea) to go
 from topic → paper; watch it live in the banner and browse the 🌳 Hypotheses and 📄 Paper
 tabs. Or chat to build a domain, brainstorm ideas, and pin one.
+
+> 📘 **New to the UI?** Follow the **[Web UI walkthrough](docs/web-guide.md)** — four annotated steps from domain to paper, each with its CLI equivalent.
 
 ---
 
@@ -148,7 +173,9 @@ pip install -e ".[dev]"
 ```
 
 **Configure** — local mode reads config with this precedence (highest first):
-**environment variables → `.env` (cwd) → `.env` in `$PAPERCLAW_HOME` → `settings.json`**.
+**environment variables → `.env` (cwd) → `.env` in `$PAPERCLAW_HOME` → `./settings.yaml` (project
+dir) → `$PAPERCLAW_HOME/settings.yaml`**. The simplest path is the grouped `settings.yaml`
+above; the env keys below override individual fields:
 
 | Key | Purpose |
 |---|---|
@@ -349,8 +376,15 @@ Deploy the backend on the server and reach it over an SSH tunnel — no public p
 OpenAlex now budget-limits anonymous (per-IP) requests. Add a free OpenAlex API key in
 **Settings → 📚 Academic search** (or `OPENALEX_API_KEY`) for a dedicated budget.
 
+**I clicked the top-left ⚡ Auto run but the UI shows no progress — where did it go?**
+The sidebar's top-left **⚡ Auto run** launches a run from a **topic** (it mirrors `paperclaw
+run "your topic"`) and is still in **beta** — its in-app progress view is under development.
+The run is fine (detached, like any auto run); follow it from any terminal with `paperclaw
+status` (and `paperclaw stop` / `paperclaw resume`). Auto runs started on an *existing* idea
+(the top-bar ⚡ Auto run) do show the live banner. See the [Web UI walkthrough](docs/web-guide.md#4-auto-run--topic--paper-on-autopilot).
+
 **Is my API key safe?**
-Keys are stored server-side in `saves/settings.json` (mode `600`) and never sent to the
+Keys are stored server-side in `saves/settings.yaml` (mode `600`) and never sent to the
 browser or logged.
 
 **Do I need a GPU?**

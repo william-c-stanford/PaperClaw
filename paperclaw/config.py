@@ -1,9 +1,9 @@
 """Application home directory and persisted settings."""
 
-import json
 import os
 from pathlib import Path
 
+import yaml
 from pydantic import BaseModel
 
 DEFAULT_MODEL = "claude-opus-4-8"
@@ -32,6 +32,8 @@ class LLMSettings(BaseModel):
     model: str = DEFAULT_MODEL
     # Chat file editor: "deepagents" (default — used when the optional package is
     # installed; otherwise falls back to "builtin" automatically) | "builtin".
+    # NOT a settings file field anymore — it always defaults to "deepagents"; power
+    # users can still override it with the PAPERCLAW_CHAT_AGENT env var.
     chat_agent: str = "deepagents"
     # Image generation API for paper figures (intro/method diagrams). OpenAI-style
     # images endpoint by default; base_url None = OpenAI. Empty key = disabled.
@@ -44,8 +46,71 @@ class LLMSettings(BaseModel):
     openalex_api_key: str = ""
 
 
+# Config files, in read-precedence order. We write YAML (comments-friendly) but
+# still READ a legacy settings.json (JSON is valid YAML, so the parser handles both).
+SETTINGS_FILENAMES = ("settings.yaml", "settings.yml", "settings.json")
+
+
 def settings_path(home: Path) -> Path:
-    return home / "settings.json"
+    """Canonical path settings are WRITTEN to (YAML)."""
+    return home / "settings.yaml"
+
+
+def _resolve_settings_file(directory: Path) -> Path | None:
+    """First existing settings file in ``directory`` (yaml > yml > json), else None."""
+    for name in SETTINGS_FILENAMES:
+        candidate = directory / name
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _settings_from_config(raw: dict) -> LLMSettings:
+    """Parse the on-disk settings.yaml. The file groups keys into sub-dicts:
+
+        LLM:              {provider, base_url, api_key, model}
+        image_generation: {base_url, api_key, model}
+        academic_search:  {open_alex: {api_key}}
+
+    Backward-compatible with the old FLAT layout (top-level provider/api_key/…).
+    `chat_agent` is intentionally NOT read from the file (always defaults to
+    "deepagents"; override via PAPERCLAW_CHAT_AGENT).
+    """
+    llm = raw.get("LLM") or raw.get("llm") or {}
+    img = raw.get("image_generation") or raw.get("image") or {}
+    acad = raw.get("academic_search") or {}
+    open_alex = (acad.get("open_alex") or acad.get("openalex") or {}) if isinstance(acad, dict) else {}
+    data = {
+        "provider": llm.get("provider", raw.get("provider", "anthropic")),
+        "base_url": llm.get("base_url", raw.get("base_url")),
+        "api_key": llm.get("api_key", raw.get("api_key", "")),
+        "model": llm.get("model", raw.get("model", DEFAULT_MODEL)),
+        "image_base_url": img.get("base_url", raw.get("image_base_url")),
+        "image_api_key": img.get("api_key", raw.get("image_api_key", "")),
+        "image_model": img.get("model", raw.get("image_model")),
+        "openalex_api_key": open_alex.get("api_key", raw.get("openalex_api_key", "")),
+    }
+    return LLMSettings.model_validate(data)
+
+
+def _settings_to_config(settings: LLMSettings) -> dict:
+    """Serialize to the nested on-disk layout (no `chat_agent` — see LLMSettings)."""
+    return {
+        "LLM": {
+            "provider": settings.provider,
+            "base_url": settings.base_url,
+            "api_key": settings.api_key,
+            "model": settings.model,
+        },
+        "image_generation": {
+            "base_url": settings.image_base_url,
+            "api_key": settings.image_api_key,
+            "model": settings.image_model,
+        },
+        "academic_search": {
+            "open_alex": {"api_key": settings.openalex_api_key},
+        },
+    }
 
 
 def _parse_env_file(path: Path) -> dict[str, str]:
@@ -63,16 +128,23 @@ def _parse_env_file(path: Path) -> dict[str, str]:
 
 
 def load_settings(home: Path) -> LLMSettings:
-    """Settings precedence: env vars > .env (cwd, then PaperClaw home) > settings.json.
+    """Settings precedence (highest first): env vars > .env (cwd, then PaperClaw home)
+    > ``./settings.yaml`` (project working directory) > ``$PAPERCLAW_HOME/settings.yaml``.
 
-    Recognized keys: PAPERCLAW_PROVIDER, PAPERCLAW_BASE_URL, PAPERCLAW_MODEL, PAPERCLAW_API_KEY —
-    plus ANTHROPIC_API_KEY / OPENAI_API_KEY as provider-matched fallbacks.
+    The project-directory ``settings.yaml`` lets users configure backend AND CLI by
+    editing one file (copy ``settings.example.yaml``) instead of running ``settings set``;
+    it takes precedence over the persisted home file. YAML keeps the file commentable; a
+    legacy ``settings.json`` is still read (JSON is valid YAML). Recognized env keys:
+    PAPERCLAW_PROVIDER, PAPERCLAW_BASE_URL, PAPERCLAW_MODEL, PAPERCLAW_API_KEY — plus
+    ANTHROPIC_API_KEY / OPENAI_API_KEY as provider-matched fallbacks.
     """
     settings = LLMSettings()
-    path = settings_path(home)
-    if path.is_file():
+    # A settings.yaml in the working directory is the no-command config; it overrides the
+    # persisted $PAPERCLAW_HOME/settings.yaml (written by the UI / `settings set`).
+    cfg_path = _resolve_settings_file(Path.cwd()) or _resolve_settings_file(home)
+    if cfg_path is not None:
         try:
-            settings = LLMSettings.model_validate_json(path.read_text())
+            settings = _settings_from_config(yaml.safe_load(cfg_path.read_text()) or {})
         except Exception:
             pass
 
@@ -114,6 +186,7 @@ def load_settings(home: Path) -> LLMSettings:
 
 def save_settings(home: Path, settings: LLMSettings) -> None:
     home.mkdir(parents=True, exist_ok=True)
-    path = settings_path(home)
-    path.write_text(json.dumps(settings.model_dump(), indent=2))
+    path = settings_path(home)  # settings.yaml
+    path.write_text(yaml.safe_dump(_settings_to_config(settings),
+                                   sort_keys=False, default_flow_style=False, allow_unicode=True))
     os.chmod(path, 0o600)  # contains the API key

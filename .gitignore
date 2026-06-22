@@ -27,3 +27,11 @@ CLAUDE.md
 
 # PaperClaw default save dir (PAPERCLAW_HOME)
 saves/
+
+# experiment dataset cache (large; downloaded at run time)
+cache/
+
+# user config (holds API keys) — edit a copy of settings.example.yaml
+/settings.yaml
+/settings.yml
+/settings.json

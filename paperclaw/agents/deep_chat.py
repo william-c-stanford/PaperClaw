@@ -10,7 +10,7 @@ This is the DEFAULT chat editor (`config.chat_agent` defaults to "deepagents"),
 but `deepagents` (+ `langchain-openai` / `langchain-anthropic`) is an OPTIONAL
 dependency: if it isn't installed, `available()` is False and the chat
 automatically falls back to the built-in tool loop. Force the old behavior with
-`chat_agent="builtin"` (env `PAPERCLAW_CHAT_AGENT=builtin`, .env, or settings.json).
+`chat_agent="builtin"` (env `PAPERCLAW_CHAT_AGENT=builtin` or .env — not a settings file key).
 
 `stream_deep_chat` yields the same event shape the chat path already consumes:
   {"type":"delta","text":…}  streamed assistant text
