@@ -11,6 +11,7 @@ O **PaperClaw** orquestra agentes autônomos por todo o ciclo de pesquisa —
 **🧭 Domínio → 💡 Ideia → 📄 Artigo**. Dê um tema e ele fundamenta um campo, gera uma
 ideia, executa experimentos *reais* e escreve um artigo citado e compilado.
 
+[![arXiv](https://img.shields.io/badge/arXiv-2606.22610-b31b1b.svg)](https://arxiv.org/abs/2606.22610)
 [![License: MIT](https://img.shields.io/badge/License-MIT-E11D48.svg)](../../LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-FB923C.svg)
 ![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
@@ -390,6 +391,19 @@ remoto SSH e planeja os experimentos conforme a computação que você realmente
 **Web ou CLI?**
 Qualquer um — compartilham o mesmo backend e os dados de `saves/`, então você pode alternar livremente; a
 CLI reflete cada recurso da web.
+
+## ✦ Como citar
+
+O PaperClaw é descrito em nosso artigo — **[PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement](https://arxiv.org/abs/2606.22610)**. Se você usá-lo em sua pesquisa, cite:
+
+```bibtex
+@article{ye2026paperclaw,
+  title   = {PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement},
+  author  = {Ye, Weiwei and Liu, Hangchen and Li, Dongyuan and Jiang, Renhe},
+  journal = {arXiv preprint arXiv:2606.22610},
+  year    = {2026}
+}
+```
 
 ## ✦ Licença
 

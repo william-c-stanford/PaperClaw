@@ -11,6 +11,7 @@
 **🧭 Dominio → 💡 Idea → 📄 Articolo**. Indica un argomento e fonda un campo, genera
 un'idea, esegue esperimenti *reali* e scrive un articolo citato e compilato.
 
+[![arXiv](https://img.shields.io/badge/arXiv-2606.22610-b31b1b.svg)](https://arxiv.org/abs/2606.22610)
 [![License: MIT](https://img.shields.io/badge/License-MIT-E11D48.svg)](../../LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-FB923C.svg)
 ![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
@@ -391,6 +392,19 @@ qualsiasi remoto SSH e pianifica gli esperimenti in base al calcolo che hai davv
 **Web o CLI?**
 Entrambi — condividono lo stesso backend e i dati di `saves/`, quindi puoi passare liberamente; la CLI
 rispecchia ogni funzionalità web.
+
+## ✦ Citazione
+
+PaperClaw è descritto nel nostro articolo — **[PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement](https://arxiv.org/abs/2606.22610)**. Se lo usi nella tua ricerca, citalo:
+
+```bibtex
+@article{ye2026paperclaw,
+  title   = {PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement},
+  author  = {Ye, Weiwei and Liu, Hangchen and Li, Dongyuan and Jiang, Renhe},
+  journal = {arXiv preprint arXiv:2606.22610},
+  year    = {2026}
+}
+```
 
 ## ✦ Licenza
 

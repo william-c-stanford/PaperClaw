@@ -11,6 +11,7 @@
 **🧭 डोमेन → 💡 आइडिया → 📄 पेपर**। एक विषय बताइए और यह क्षेत्र को आधार देता है, एक आइडिया गढ़ता है,
 *असली* प्रयोग चलाता है, और एक उद्धृत, संकलित शोध-पत्र लिखता है।
 
+[![arXiv](https://img.shields.io/badge/arXiv-2606.22610-b31b1b.svg)](https://arxiv.org/abs/2606.22610)
 [![License: MIT](https://img.shields.io/badge/License-MIT-E11D48.svg)](../../LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-FB923C.svg)
 ![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
@@ -386,6 +387,19 @@ OpenAlex अब गुमनाम (प्रति-IP) अनुरोधों
 **वेब या CLI?**
 कोई भी — दोनों एक ही बैकएंड और `saves/` डेटा साझा करते हैं, इसलिए आप स्वतंत्र रूप से बदल सकते हैं; CLI हर
 वेब सुविधा को प्रतिबिंबित करता है।
+
+## ✦ उद्धरण
+
+PaperClaw हमारे पेपर में वर्णित है — **[PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement](https://arxiv.org/abs/2606.22610)**। यदि आप इसे अपने शोध में उपयोग करते हैं, तो कृपया उद्धृत करें:
+
+```bibtex
+@article{ye2026paperclaw,
+  title   = {PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement},
+  author  = {Ye, Weiwei and Liu, Hangchen and Li, Dongyuan and Jiang, Renhe},
+  journal = {arXiv preprint arXiv:2606.22610},
+  year    = {2026}
+}
+```
 
 ## ✦ लाइसेंस
 

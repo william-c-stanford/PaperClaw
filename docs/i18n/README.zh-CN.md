@@ -11,6 +11,7 @@
 **🧭 领域 → 💡 想法 → 📄 论文**。给出一个主题，它便会界定领域、构思想法、
 运行*真实*实验，并写出一篇带引用、可编译的论文。
 
+[![arXiv](https://img.shields.io/badge/arXiv-2606.22610-b31b1b.svg)](https://arxiv.org/abs/2606.22610)
 [![License: MIT](https://img.shields.io/badge/License-MIT-E11D48.svg)](../../LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-FB923C.svg)
 ![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
@@ -380,6 +381,19 @@ OpenAlex 现在会对匿名（按 IP）请求做预算限流。在 **设置 → 
 
 **用 Web 还是 CLI？**
 都行 —— 它们共享同一个后端与 `saves/` 数据，可自由切换；CLI 与 Web 的每项功能一一对应。
+
+## ✦ 引用
+
+PaperClaw 在我们的论文中有详细介绍 —— **[PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement](https://arxiv.org/abs/2606.22610)**。如果你在研究中使用它，请引用：
+
+```bibtex
+@article{ye2026paperclaw,
+  title   = {PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement},
+  author  = {Ye, Weiwei and Liu, Hangchen and Li, Dongyuan and Jiang, Renhe},
+  journal = {arXiv preprint arXiv:2606.22610},
+  year    = {2026}
+}
+```
 
 ## ✦ 许可证
 

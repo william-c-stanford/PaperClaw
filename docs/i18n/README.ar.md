@@ -11,6 +11,7 @@
 **🧭 المجال → 💡 الفكرة → 📄 الورقة**. سمِّ موضوعًا فيؤصّل مجالًا، ويولّد فكرة، ويُجري
 تجارب *حقيقية*، ويكتب ورقة مُستشهَدًا بها وجاهزة للتجميع.
 
+[![arXiv](https://img.shields.io/badge/arXiv-2606.22610-b31b1b.svg)](https://arxiv.org/abs/2606.22610)
 [![License: MIT](https://img.shields.io/badge/License-MIT-E11D48.svg)](../../LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-FB923C.svg)
 ![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
@@ -382,6 +383,19 @@ Anthropic عبر SDK الرسمي، أو أي نقطة نهاية متوافقة
 
 **ويب أم CLI؟**
 أيٌّ منهما — يتشاركان الخلفية نفسها وبيانات `saves/`، فيمكنك التبديل بحرية؛ وتعكس CLI كل ميزة في الويب.
+
+## ✦ الاستشهاد
+
+PaperClaw موصوف في ورقتنا البحثية — **[PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement](https://arxiv.org/abs/2606.22610)**. إذا استخدمته في بحثك، فيرجى الاستشهاد به:
+
+```bibtex
+@article{ye2026paperclaw,
+  title   = {PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement},
+  author  = {Ye, Weiwei and Liu, Hangchen and Li, Dongyuan and Jiang, Renhe},
+  journal = {arXiv preprint arXiv:2606.22610},
+  year    = {2026}
+}
+```
 
 ## ✦ الترخيص
 

@@ -11,6 +11,7 @@
 **🧭 Domäne → 💡 Idee → 📄 Paper**. Nenne ein Thema, und es fundiert ein Feld, entwickelt
 eine Idee, führt *echte* Experimente aus und schreibt ein zitiertes, kompiliertes Paper.
 
+[![arXiv](https://img.shields.io/badge/arXiv-2606.22610-b31b1b.svg)](https://arxiv.org/abs/2606.22610)
 [![License: MIT](https://img.shields.io/badge/License-MIT-E11D48.svg)](../../LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-FB923C.svg)
 ![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)
@@ -391,6 +392,19 @@ jedem SSH-Remote und plant Experimente nach der tatsächlich verfügbaren Rechen
 **Web oder CLI?**
 Beides — sie teilen sich dasselbe Backend und die `saves/`-Daten, du kannst also frei wechseln; die CLI
 bildet jede Web-Funktion ab.
+
+## ✦ Zitation
+
+PaperClaw wird in unserem Paper beschrieben — **[PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement](https://arxiv.org/abs/2606.22610)**. Wenn du es in deiner Forschung verwendest, zitiere bitte:
+
+```bibtex
+@article{ye2026paperclaw,
+  title   = {PaperClaw: Harnessing Agents for Autonomous Research and Human-in-the-Loop Refinement},
+  author  = {Ye, Weiwei and Liu, Hangchen and Li, Dongyuan and Jiang, Renhe},
+  journal = {arXiv preprint arXiv:2606.22610},
+  year    = {2026}
+}
+```
 
 ## ✦ Lizenz
 
