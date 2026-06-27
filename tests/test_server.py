@@ -669,6 +669,28 @@ def test_stream_chat_with_tools_openai_fallback(monkeypatch):
     assert final["paths"] == ["IDEA.md"]
 
 
+def test_codex_structured_tool_calls_are_explicitly_unsupported():
+    import asyncio
+
+    from paperclaw.config import LLMSettings
+
+    settings = LLMSettings(provider="codex", model="m")
+
+    async def collect():
+        return [ev async for ev in llm.stream_chat_with_tools(
+            settings, "sys", [{"role": "user", "content": "x"}],
+            tools=[], executor=lambda n, i: "",
+        )]
+
+    with pytest.raises(llm.LLMError, match="structured tool-call"):
+        asyncio.run(llm.chat_with_tools(
+            settings, "sys", [{"role": "user", "content": "x"}],
+            tools=[], executor=lambda n, i: "",
+        ))
+    with pytest.raises(llm.LLMError, match="structured tool-call"):
+        asyncio.run(collect())
+
+
 def test_contexts_listing(tmp_path, monkeypatch):
     async def fake_chat(settings, system, messages, max_tokens=4096):
         return ChatResult(text="ok", model="test-model")
@@ -799,6 +821,28 @@ def test_settings_roundtrip_masks_key(tmp_path):
     assert client.put("/api/settings", json={"provider": "bogus"}).status_code == 422
 
 
+def test_settings_accepts_codex_without_api_key(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(True, True, True, "ready"),
+    )
+    client = make_client(tmp_path)
+
+    body = client.put(
+        "/api/settings",
+        json={"provider": "codex", "model": "codex-test-model", "apiKey": ""},
+    ).json()
+
+    assert body["provider"] == "codex"
+    assert body["model"] == "codex-test-model"
+    assert body["hasKey"] is False
+    assert body["authKind"] == "codex_login"
+    assert body["authConfigured"] is True
+
+
 def test_settings_openalex_key_masked_and_applied(tmp_path):
     from paperclaw import literature
     client = make_client(tmp_path)
@@ -890,3 +934,45 @@ def test_doctor_report(tmp_path):
     # default home has no API key → llm check fails → overall not ok
     assert body["ok"] is False
     assert next(c for c in body["checks"] if c["key"] == "llm")["status"] == "fail"
+
+
+def test_doctor_reports_codex_missing_binary(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(
+            False, False, False, "Codex CLI not found on PATH", "install Codex"
+        ),
+    )
+    client = make_client(tmp_path)
+    client.put("/api/settings", json={"provider": "codex", "model": "codex-test-model"})
+
+    body = client.get("/api/doctor").json()
+    llm_check = next(c for c in body["checks"] if c["key"] == "llm")
+    assert llm_check["status"] == "fail"
+    assert llm_check["label"] == "Codex CLI"
+    assert "OPENAI_API_KEY" not in llm_check.get("hint", "")
+
+
+def test_codex_workspace_chat_uses_workspace_bridge(tmp_path, monkeypatch):
+    async def fake_workspace(settings, base_dir, system, messages):
+        assert settings.provider == "codex"
+        assert base_dir.is_dir()
+        assert "local Codex CLI" in system
+        assert "run_in_background=true" not in system
+        return ChatResult(text="workspace done", model=settings.model, files_modified=frozenset({"IDEA.md"}))
+
+    monkeypatch.setattr(llm, "chat_workspace", fake_workspace)
+    client = make_client(tmp_path)
+    client.put("/api/settings", json={"provider": "codex", "model": "codex-test-model"})
+    idea_id = client.post("/api/ideas", json={"title": "Codex workspace"}).json()["id"]
+
+    r = client.post("/api/chat/send", json={"ideaId": idea_id, "content": "update files"})
+
+    assert r.status_code == 200
+    reply = r.json()[1]
+    assert reply["content"] == "workspace done"
+    assert reply["servedModel"] == "codex-test-model"
+    assert reply["specUpdated"] is True

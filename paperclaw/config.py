@@ -7,6 +7,31 @@ import yaml
 from pydantic import BaseModel
 
 DEFAULT_MODEL = "claude-opus-4-8"
+LLM_PROVIDERS = ("anthropic", "openai", "codex")
+API_KEY_PROVIDERS = ("anthropic", "openai")
+
+
+def normalize_provider(provider: str | None) -> str:
+    """Return a supported provider name, defaulting to Anthropic for legacy config."""
+    value = (provider or "anthropic").strip().lower()
+    return value if value in LLM_PROVIDERS else "anthropic"
+
+
+def provider_requires_api_key(provider: str | None) -> bool:
+    return normalize_provider(provider) in API_KEY_PROVIDERS
+
+
+def provider_auth_kind(provider: str | None) -> str:
+    return "codex_login" if normalize_provider(provider) == "codex" else "api_key"
+
+
+def provider_api_key_env(provider: str | None) -> str | None:
+    value = normalize_provider(provider)
+    if value == "anthropic":
+        return "ANTHROPIC_API_KEY"
+    if value == "openai":
+        return "OPENAI_API_KEY"
+    return None
 
 
 def paperclaw_home() -> Path:
@@ -26,7 +51,7 @@ def claude_cli_available() -> bool:
 
 
 class LLMSettings(BaseModel):
-    provider: str = "anthropic"  # "anthropic" | "openai" (OpenAI-compatible)
+    provider: str = "anthropic"  # "anthropic" | "openai" (OpenAI-compatible) | "codex"
     base_url: str | None = None
     api_key: str = ""
     model: str = DEFAULT_MODEL
@@ -81,7 +106,7 @@ def _settings_from_config(raw: dict) -> LLMSettings:
     acad = raw.get("academic_search") or {}
     open_alex = (acad.get("open_alex") or acad.get("openalex") or {}) if isinstance(acad, dict) else {}
     data = {
-        "provider": llm.get("provider", raw.get("provider", "anthropic")),
+        "provider": normalize_provider(llm.get("provider", raw.get("provider", "anthropic"))),
         "base_url": llm.get("base_url", raw.get("base_url")),
         "api_key": llm.get("api_key", raw.get("api_key", "")),
         "model": llm.get("model", raw.get("model", DEFAULT_MODEL)),
@@ -166,7 +191,7 @@ def load_settings(home: Path) -> LLMSettings:
     env.update(_parse_env_file(Path.cwd() / ".env"))
     env.update({k: v for k, v in os.environ.items() if v})
 
-    if env.get("PAPERCLAW_PROVIDER") in ("anthropic", "openai"):
+    if env.get("PAPERCLAW_PROVIDER") in LLM_PROVIDERS:
         settings.provider = env["PAPERCLAW_PROVIDER"]
     if env.get("PAPERCLAW_BASE_URL"):
         settings.base_url = env["PAPERCLAW_BASE_URL"]
@@ -183,8 +208,8 @@ def load_settings(home: Path) -> LLMSettings:
     if env.get("PAPERCLAW_API_KEY"):
         settings.api_key = env["PAPERCLAW_API_KEY"]
     elif not settings.api_key:
-        fallback = "ANTHROPIC_API_KEY" if settings.provider == "anthropic" else "OPENAI_API_KEY"
-        if env.get(fallback):
+        fallback = provider_api_key_env(settings.provider)
+        if fallback and env.get(fallback):
             settings.api_key = env[fallback]
     # OpenAlex key: env (or .env) overrides the saved setting, like the LLM key.
     if env.get("OPENALEX_API_KEY"):

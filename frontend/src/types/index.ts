@@ -98,6 +98,8 @@ export interface IdeaResources {
   llmModel: string | null
   llmBaseUrl: string | null
   llmKeyConfigured: boolean
+  llmAuthKind?: 'api_key' | 'codex_login' | string
+  llmAuthConfigured?: boolean
 }
 export interface IdeaResourcesUpdate {
   experimentMode?: string | null
@@ -192,6 +194,8 @@ export interface SettingsView {
   model: string
   apiKeyMasked: string
   hasKey: boolean
+  authKind?: 'api_key' | 'codex_login' | string
+  authConfigured?: boolean
   imageBaseUrl?: string | null
   imageModel?: string | null
   imageKeyMasked?: string

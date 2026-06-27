@@ -16,7 +16,7 @@ with one command. Every setting can be applied **three ways** (they share one ba
 
 | Setting | What it's for | Where |
 |---|---|---|
-| [LLM provider/model/key](#1-llm-provider-model--api-key) | the brain — chat, planning, paper writing | `LLM:` in `settings.yaml` · `settings set` · `PAPERCLAW_*` |
+| [LLM provider/model/auth](#1-llm-provider-model--auth) | the brain — chat, planning, paper writing | `LLM:` in `settings.yaml` · `settings set` · `PAPERCLAW_*` |
 | [Image generation](#2-image-generation-optional) | paper figures (intro/method diagrams) | `image_generation:` · `settings set --image-*` |
 | [Academic search](#3-academic-search--openalex-optional) | literature survey, SOTA, references | `academic_search.open_alex` · `OPENALEX_API_KEY` |
 | [Experiment execution](#4-experiment-execution) | how experiments actually run | `paperclaw hardware run-config` |
@@ -27,17 +27,19 @@ with one command. Every setting can be applied **three ways** (they share one ba
 
 ---
 
-## 1. LLM provider, model & API key
+## 1. LLM provider, model & auth
 
-The core setting. PaperClaw talks to **Anthropic** (official SDK) or **any OpenAI-compatible**
-endpoint (set `base_url` for a proxy / self-hosted / gateway). Default model `claude-opus-4-8`.
+The core setting. PaperClaw talks to **Anthropic** (official SDK), **any OpenAI-compatible**
+endpoint (set `base_url` for a proxy / self-hosted / gateway), or the local **Codex CLI**
+using your ChatGPT-authenticated Codex session. Default model `claude-opus-4-8`.
 
 ```yaml
 # settings.yaml
 LLM:
-  provider: anthropic        # anthropic | openai
+  provider: anthropic        # anthropic | openai | codex
   base_url: null             # e.g. https://api.openai.com/v1, http://localhost:11434/v1 (Ollama)
-  api_key: ""
+                             # ignored for provider: codex
+  api_key: ""                # not used for provider: codex
   model: claude-opus-4-8
 ```
 
@@ -46,12 +48,33 @@ LLM:
 paperclaw settings set --provider anthropic --model claude-opus-4-8 --api-key sk-…
 ```
 
+### Codex subscription mode
+
+Use this when you have a Codex subscription through ChatGPT and do not want to configure an
+OpenAI API key for PaperClaw text calls:
+
+```bash
+codex login                                      # choose ChatGPT sign-in
+paperclaw settings set --provider codex --model <codex-model>
+paperclaw doctor
+```
+
+With `provider: codex`, PaperClaw invokes `codex exec` locally. It passes the configured
+`LLM.model`, uses Codex's own login, and never reads, stores, or displays ChatGPT/Codex tokens.
+Text-only calls run in a temporary read-only workspace; idea/domain workspace chat runs in the
+selected workspace and reports changed files by snapshot. Structured Anthropic/OpenAI-style
+tool-call exchange remains API-provider-only.
+
+Codex only covers text model execution. OpenAlex literature search still uses
+`academic_search.open_alex.api_key` or `OPENALEX_API_KEY`, and image generation still uses
+the `image_generation` settings.
+
 | Env var | Field |
 |---|---|
-| `PAPERCLAW_PROVIDER` | `anthropic` \| `openai` |
+| `PAPERCLAW_PROVIDER` | `anthropic` \| `openai` \| `codex` |
 | `PAPERCLAW_BASE_URL` | proxy / self-hosted endpoint |
 | `PAPERCLAW_MODEL` | model id |
-| `PAPERCLAW_API_KEY` | API key (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are provider-matched fallbacks) |
+| `PAPERCLAW_API_KEY` | API key for Anthropic/OpenAI-compatible providers (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are provider-matched fallbacks) |
 
 > Without a key the app still runs and replies with a configuration hint — nothing crashes.
 
@@ -157,7 +180,7 @@ binary) **or** a TeX Live distribution; the doctor reports which engines it foun
 ## 7. Verify with the doctor
 
 One command (no LLM calls) checks the whole environment is ready — PaperClaw home (writable),
-LLM config, chat agent, the coding agent (`claude` CLI), the LaTeX toolchain, and image
+LLM config or Codex login, chat agent, the coding agent (`claude` CLI), the LaTeX toolchain, and image
 generation. Each check is `ok | warn | fail`; only a `fail` blocks readiness.
 
 ```bash

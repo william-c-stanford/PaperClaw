@@ -21,7 +21,8 @@ const DOCTOR_ICON: Record<string, string> = { ok: '✓', warn: '!', fail: '✗' 
 
 const PROVIDER_DEFAULTS: Record<string, { baseUrl: string; model: string }> = {
   anthropic: { baseUrl: 'https://api.anthropic.com', model: 'claude-opus-4-8' },
-  openai: { baseUrl: 'https://api.openai.com/v1', model: '' }
+  openai: { baseUrl: 'https://api.openai.com/v1', model: '' },
+  codex: { baseUrl: '', model: '' }
 }
 
 function newId(): string {
@@ -89,6 +90,10 @@ export default function SettingsModal({ onClose }: Props) {
 
   const onProviderChange = (p: string) => {
     setProvider(p)
+    if (p === 'codex') {
+      setBaseUrl('')
+      return
+    }
     const d = PROVIDER_DEFAULTS[p]
     if (d && !baseUrl) setBaseUrl(d.baseUrl)
     if (d && d.model && (!model || model === PROVIDER_DEFAULTS.anthropic.model)) setModel(d.model)
@@ -100,9 +105,9 @@ export default function SettingsModal({ onClose }: Props) {
     try {
       const sv = await api.putSettings({
         provider,
-        baseUrl,
+        baseUrl: provider === 'codex' ? '' : baseUrl,
         model,
-        ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
+        ...(provider !== 'codex' && apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
         imageBaseUrl,
         imageModel,
         ...(imageApiKey.trim() ? { imageApiKey: imageApiKey.trim() } : {}),
@@ -183,19 +188,22 @@ export default function SettingsModal({ onClose }: Props) {
                   <select className={s.select} value={provider} onChange={e => onProviderChange(e.target.value)}>
                     <option value="anthropic">Anthropic</option>
                     <option value="openai">OpenAI-compatible</option>
+                    <option value="codex">Codex subscription</option>
                   </select>
                 </div>
 
-                <div className={s.field}>
-                  <label className={s.label}>Base URL</label>
-                  <input
-                    className={s.input}
-                    value={baseUrl}
-                    onChange={e => setBaseUrl(e.target.value)}
-                    placeholder={PROVIDER_DEFAULTS[provider]?.baseUrl ?? ''}
-                  />
-                  <span className={s.hint}>Leave as default unless using a proxy or self-hosted endpoint.</span>
-                </div>
+                {provider !== 'codex' && (
+                  <div className={s.field}>
+                    <label className={s.label}>Base URL</label>
+                    <input
+                      className={s.input}
+                      value={baseUrl}
+                      onChange={e => setBaseUrl(e.target.value)}
+                      placeholder={PROVIDER_DEFAULTS[provider]?.baseUrl ?? ''}
+                    />
+                    <span className={s.hint}>Leave as default unless using a proxy or self-hosted endpoint.</span>
+                  </div>
+                )}
 
                 <div className={s.field}>
                   <label className={s.label}>Model</label>
@@ -203,21 +211,32 @@ export default function SettingsModal({ onClose }: Props) {
                     className={s.input}
                     value={model}
                     onChange={e => setModel(e.target.value)}
-                    placeholder="e.g. claude-opus-4-8"
+                    placeholder={provider === 'codex' ? 'Codex model name' : 'e.g. claude-opus-4-8'}
                   />
                 </div>
 
-                <div className={s.field}>
-                  <label className={s.label}>API Key</label>
-                  <input
-                    className={s.input}
-                    type="password"
-                    value={apiKey}
-                    onChange={e => setApiKey(e.target.value)}
-                    placeholder={loaded?.hasKey ? `Saved: ${loaded.apiKeyMasked} — type to replace` : 'sk-…'}
-                  />
-                  <span className={s.hint}>Stored server-side only; never sent back to the browser.</span>
-                </div>
+                {provider === 'codex' ? (
+                  <div className={s.field}>
+                    <label className={s.label}>Auth</label>
+                    <span className={s.hint}>
+                      {loaded?.provider === 'codex' && loaded.authConfigured
+                        ? 'Codex login configured'
+                        : 'Use `codex login` with ChatGPT on the backend machine.'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className={s.field}>
+                    <label className={s.label}>API Key</label>
+                    <input
+                      className={s.input}
+                      type="password"
+                      value={apiKey}
+                      onChange={e => setApiKey(e.target.value)}
+                      placeholder={loaded?.hasKey ? `Saved: ${loaded.apiKeyMasked} — type to replace` : 'sk-…'}
+                    />
+                    <span className={s.hint}>Stored server-side only; never sent back to the browser.</span>
+                  </div>
+                )}
 
                 <div className={s.sectionDivider}>
                   <span className={s.sectionTitle}>🖼️ Image generation (paper figures)</span>

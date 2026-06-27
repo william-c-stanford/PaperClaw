@@ -12,13 +12,12 @@ import os
 import re
 import shutil
 import time
-import uuid
 from typing import AsyncIterator
 
-from paperclaw import benchmarks, codebase, hardware, literature, llm, references, writing_styles
+from paperclaw import benchmarks, codex_cli, codebase, hardware, literature, llm, references, writing_styles
 from paperclaw import tools as _tools
 from paperclaw.agents import deep_chat
-from paperclaw.config import LLMSettings, paperclaw_home
+from paperclaw.config import LLMSettings, paperclaw_home, provider_auth_kind, provider_requires_api_key
 from paperclaw.domains import (
     AUTO_DOMAIN_SYSTEM,
     DOMAIN_CHAT_SYSTEM,
@@ -123,6 +122,27 @@ GENERATE_COUNT = 5
 DRAFT_COUNT = 3
 MAX_GENERATE_COUNT = 12
 DOMAIN_SPEC_CHAR_LIMIT = 6000
+CODEX_WORKSPACE_ADDENDUM = """\
+
+## Editing workspace files through Codex
+
+You are running through the local Codex CLI in THIS workspace directory. Use Codex's
+native file editing and shell capabilities to inspect and update files directly. Do not
+refer to PaperClaw-only structured tools such as `read_file`, `list_exp_resources`,
+`bash_output`, `openalex_search`, or `cite` unless Codex itself exposes them.
+
+For a partial change to the active spec file (`IDEA.md`, or `DOMAIN.md` in a domain
+chat), edit the file directly instead of emitting a full fenced `idea.md` or `domain.md`
+block. Reserve fenced blocks for non-file protocols such as `question`, `new-idea`, and
+`new-domain`.
+
+Keep workspace artifacts on their canonical paths so PaperClaw can refresh the UI:
+- Idea spec: `IDEA.md`
+- Domain spec: `DOMAIN.md`
+- Hypothesis map: `.hypothesis_map.json`
+- Hypothesis plan/report files: `hypotheses/<id>/plan.md` and `hypotheses/<id>/report.md`
+- Papers: `paper.tex` or `paper_v2.tex`, `paper_v3.tex`, and so on
+"""
 
 
 def _clamp_count(count: int | None, default: int) -> int:
@@ -346,13 +366,17 @@ async def send_chat(
     # Anthropic (native tool_use) and OpenAI-compatible endpoints (function calls),
     # so both need the instructions describing apply_patch / read_file / openalex_search.
     if base_dir is not None:
-        if domain_spec is not None:
+        if settings.provider == "codex":
+            system = system + "\n" + CODEX_WORKSPACE_ADDENDUM
+        elif domain_spec is not None:
             system = system + "\n" + DOMAIN_TOOL_ADDENDUM
         elif idea_id and seed is None:
             system = system + "\n" + CHAT_TOOL_ADDENDUM
 
     try:
-        if base_dir is not None:
+        if base_dir is not None and settings.provider == "codex":
+            result = await llm.chat_workspace(settings, base_dir, system, llm_messages)
+        elif base_dir is not None:
             result = await llm.chat_with_tools(
                 settings, system, llm_messages,
                 tools=_tools.ALL_TOOLS,
@@ -451,11 +475,13 @@ def _existing_idea_labels(store: Store, query: str, limit: int = 20) -> list[str
     for idea in store.list_ideas():       # pinned ideas — the main source of duplicates
         t = (idea.title or "").strip()
         if t and t.lower() not in seen:
-            seen.add(t.lower()); labels.append(t)
+            seen.add(t.lower())
+            labels.append(t)
     for s in store.list_seeds():          # seeds / drafts not yet pinned
         t = (s.text or "").strip()
         if t and t.lower() not in seen:
-            seen.add(t.lower()); labels.append(t)
+            seen.add(t.lower())
+            labels.append(t)
     if not labels or not query.strip():
         return labels[:limit]
     q = query.lower()
@@ -1397,10 +1423,20 @@ def environment_report(settings: LLMSettings, home=None) -> DoctorReport:
         checks.append(EnvCheck(key="home", label="PaperClaw home", status="fail",
                                detail=f"{h} — {exc}", hint="check permissions / disk space"))
 
-    # 2. LLM provider / model / API key.
+    # 2. LLM provider / model / auth.
     model = settings.model or "(unset)"
     where = f"{settings.provider} · {model}"
-    if settings.api_key:
+    if settings.provider == "codex":
+        ready = codex_cli.check_readiness(run_doctor=True)
+        status = "ok" if ready.installed and ready.logged_in and ready.healthy else "fail"
+        checks.append(EnvCheck(
+            key="llm",
+            label="Codex CLI",
+            status=status,
+            detail=f"{where} — {ready.detail}",
+            hint=None if status == "ok" else ready.hint,
+        ))
+    elif settings.api_key:
         checks.append(EnvCheck(key="llm", label="LLM API", status="ok", detail=where))
     else:
         env_key = "ANTHROPIC_API_KEY" if settings.provider == "anthropic" else "OPENAI_API_KEY"
@@ -1792,6 +1828,12 @@ def get_idea_resources_view(store: Store, settings: LLMSettings, idea_id: str) -
         "llmModel": settings.model,
         "llmBaseUrl": settings.base_url,
         "llmKeyConfigured": bool(settings.api_key),
+        "llmAuthKind": provider_auth_kind(settings.provider),
+        "llmAuthConfigured": (
+            bool(settings.api_key)
+            if provider_requires_api_key(settings.provider)
+            else codex_cli.check_readiness(run_doctor=False).logged_in
+        ),
     }
 
 
@@ -2653,13 +2695,16 @@ async def stream_chat_events(
     # built-in file tools edit real files reliably, instead of the diff-based
     # apply_patch. The self-defined tool loop stays defined but unused here; force it
     # back with chat_agent="builtin". (Seed/scratch have no workspace → plain chat.)
-    use_deep = (base_dir is not None
+    use_codex_workspace = base_dir is not None and settings.provider == "codex"
+    use_deep = (base_dir is not None and not use_codex_workspace
                 and (settings.chat_agent or "").lower() != "builtin" and deep_chat.available())
 
     # Addenda go to every provider — chat_with_tools wires tools to both Anthropic
     # and OpenAI-compatible endpoints, so both need the usage instructions.
     if base_dir is not None:
-        if use_deep:
+        if use_codex_workspace:
+            system = system + "\n" + CODEX_WORKSPACE_ADDENDUM
+        elif use_deep:
             system = system + "\n" + DEEP_CHAT_ADDENDUM
         elif domain_spec is not None:
             system = system + "\n" + DOMAIN_TOOL_ADDENDUM
@@ -2687,7 +2732,14 @@ async def stream_chat_events(
             acc_parts.append({"kind": "text", "text": t})
 
     try:
-        if use_deep:
+        if use_codex_workspace:
+            result = await llm.chat_workspace(settings, base_dir, system, llm_messages)
+            full_text = result.text
+            stream_files_modified = result.files_modified
+            if result.text:
+                _acc_text(result.text)
+                yield {"type": "delta", "text": result.text}
+        elif use_deep:
             try:
                 async for ev in deep_chat.stream_deep_chat(settings, base_dir, system, llm_messages):
                     t = ev["type"]

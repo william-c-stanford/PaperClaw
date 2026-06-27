@@ -15,7 +15,14 @@ from typing import Any, Callable
 import httpx
 
 from paperclaw import service
-from paperclaw.config import paperclaw_home, load_settings, save_settings
+from paperclaw.config import (
+    LLM_PROVIDERS,
+    paperclaw_home,
+    load_settings,
+    provider_auth_kind,
+    provider_requires_api_key,
+    save_settings,
+)
 from paperclaw.server.store import Store
 
 DEFAULT_BACKEND = "http://127.0.0.1:8230"
@@ -303,19 +310,30 @@ class LocalClient:
 
     # Settings
     def settings_show(self):
+        from paperclaw import codex_cli
         s = self.settings
         masked = f"{s.api_key[:4]}…{s.api_key[-4:]}" if len(s.api_key) > 8 else "•" * len(s.api_key)
         oa = s.openalex_api_key
         oa_masked = f"{oa[:4]}…{oa[-4:]}" if len(oa) > 8 else "•" * len(oa)
+        auth_kind = provider_auth_kind(s.provider)
+        auth_configured = (
+            bool(s.api_key)
+            if provider_requires_api_key(s.provider)
+            else codex_cli.check_readiness(run_doctor=False).logged_in
+        )
         return {"provider": s.provider, "baseUrl": s.base_url, "model": s.model,
                 "apiKeyMasked": masked, "hasKey": bool(s.api_key),
+                "authKind": auth_kind, "authConfigured": auth_configured,
                 "openalexKeyMasked": oa_masked, "hasOpenalexKey": bool(oa)}
     def settings_set(self, provider=None, base_url=None, model=None, api_key=None,
                      image_base_url=None, image_model=None, image_api_key=None,
                      openalex_api_key=None):
         from paperclaw import literature
         s = self.settings
-        if provider: s.provider = provider
+        if provider:
+            if provider not in LLM_PROVIDERS:
+                raise ClientError("provider must be one of: " + ", ".join(LLM_PROVIDERS))
+            s.provider = provider
         if base_url is not None: s.base_url = base_url or None
         if model: s.model = model
         if api_key: s.api_key = api_key

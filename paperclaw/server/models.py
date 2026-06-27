@@ -91,6 +91,8 @@ class IdeaResources(BaseModel):
     llm_model: Optional[str] = Field(default=None, alias="llmModel")
     llm_base_url: Optional[str] = Field(default=None, alias="llmBaseUrl")
     llm_key_configured: bool = Field(default=False, alias="llmKeyConfigured")
+    llm_auth_kind: str = Field(default="api_key", alias="llmAuthKind")
+    llm_auth_configured: bool = Field(default=False, alias="llmAuthConfigured")
 
     model_config = {"populate_by_name": True}
 
@@ -301,6 +303,8 @@ class SettingsView(BaseModel):
     model: str
     api_key_masked: str = Field(default="", alias="apiKeyMasked")
     has_key: bool = Field(default=False, alias="hasKey")
+    auth_kind: str = Field(default="api_key", alias="authKind")
+    auth_configured: bool = Field(default=False, alias="authConfigured")
     # Image generation (paper figures)
     image_base_url: Optional[str] = Field(default=None, alias="imageBaseUrl")
     image_model: Optional[str] = Field(default=None, alias="imageModel")
