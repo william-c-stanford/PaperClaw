@@ -12,6 +12,22 @@ with one command. Every setting can be applied **three ways** (they share one ba
 > `./settings.yaml` (project-dir DEFAULT). So a change saved in the Settings UI persists and
 > overrides the project-dir default. Secrets stay server-side (`saves/settings.yaml`, mode `600`) and are never sent to the browser.
 
+### Python virtual environment
+
+Install PaperClaw into a clean Python environment before running `pip install`. This avoids
+conflicts with packages from system Python, Anaconda, Spyder, or another project.
+
+```bash
+cd /path/to/PaperClaw
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e ".[dev]"
+```
+
+Do not create the environment with `--system-site-packages`; PaperClaw requires Python 3.11+
+and should not share the package set from an existing desktop or notebook environment.
+
 ### At a glance
 
 | Setting | What it's for | Where |

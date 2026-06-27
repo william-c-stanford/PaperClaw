@@ -135,9 +135,15 @@ academic_search:
 **Install** — backend + frontend:
 
 ```bash
-pip install -e ".[dev]"          # backend (Python)
-cd frontend && npm install       # frontend (Node)
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e ".[dev]"    # backend (Python)
+cd frontend && npm install           # frontend (Node)
 ```
+
+The virtual environment keeps PaperClaw isolated from system, Anaconda, Spyder, or other
+project packages. Do not create it with `--system-site-packages`.
 
 **Run** — `./dev.sh` from the repo root starts both and kills stale ports:
 
@@ -172,7 +178,10 @@ tabs. Or chat to build a domain, brainstorm ideas, and pin one.
 The CLI mirrors every web feature. **Install only the backend** (no frontend build needed):
 
 ```bash
-pip install -e ".[dev]"
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e ".[dev]"
 ```
 
 **Configure** — local mode reads config with this precedence (highest first):
@@ -254,7 +263,10 @@ the ⏹ on the web banner); **continue** a stopped run with `paperclaw resume [-
 Or manually — backend from the repo root, **npm commands inside `frontend/`**:
 
 ```bash
-pip install -e ".[dev]"
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e ".[dev]"
 paperclaw serve --reload                  # repo root — API on :8230
 cd frontend && npm install
 npm run dev:web                           # web     → http://localhost:5173
