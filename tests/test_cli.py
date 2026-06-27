@@ -11,7 +11,7 @@ from paperclaw.llm import ChatResult
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path, monkeypatch):
     for var in ("PAPERCLAW_PROVIDER", "PAPERCLAW_BASE_URL", "PAPERCLAW_MODEL", "PAPERCLAW_API_KEY",
-                "ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
+                "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "PAPERCLAW_CODEX_BIN"):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("PAPERCLAW_HOME", str(tmp_path))
     monkeypatch.chdir(tmp_path)
@@ -83,6 +83,8 @@ def test_local_client_idea_resources(tmp_path):
     i = client.idea_create("My idea")
     r = client.idea_resources_get(i["id"])
     assert "experimentMode" in r and r["llmKeyConfigured"] in (True, False)   # view shape
+    assert r["llmAuthKind"] == "api_key"
+    assert r["llmAuthConfigured"] in (True, False)
     client.idea_resources_set(i["id"], experiment_mode="ssh", ssh_target_id="gpu1")
     cfg = client.store.effective_run_config(i["id"])                          # what runs will use
     assert cfg.experiment_mode == "ssh" and cfg.ssh_target_id == "gpu1"
@@ -190,6 +192,42 @@ def test_provider_key_fallback(tmp_path, monkeypatch):
     settings = load_settings(tmp_path)
     assert settings.provider == "anthropic"
     assert settings.api_key == "sk-ant-fallback"
+
+
+def test_codex_provider_does_not_use_openai_key_fallback(tmp_path, monkeypatch):
+    monkeypatch.setenv("PAPERCLAW_PROVIDER", "codex")
+    monkeypatch.setenv("PAPERCLAW_MODEL", "codex-test-model")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-fallback")
+
+    settings = load_settings(tmp_path)
+
+    assert settings.provider == "codex"
+    assert settings.model == "codex-test-model"
+    assert settings.api_key == ""
+
+
+def test_local_client_codex_settings_and_resources(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(True, True, True, "ready"),
+    )
+    client = LocalClient()
+
+    out = client.settings_set(provider="codex", model="codex-test-model")
+    assert out["provider"] == "codex"
+    assert out["authKind"] == "codex_login"
+    assert out["authConfigured"] is True
+    assert out["hasKey"] is False
+
+    idea = client.idea_create("Codex idea")
+    resources = client.idea_resources_get(idea["id"])
+    assert resources["llmProvider"] == "codex"
+    assert resources["llmKeyConfigured"] is False
+    assert resources["llmAuthKind"] == "codex_login"
+    assert resources["llmAuthConfigured"] is True
 
 
 def test_home_settings_yaml_overrides_project_default(tmp_path, monkeypatch):

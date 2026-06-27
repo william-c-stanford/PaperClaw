@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 
-from paperclaw import literature
-from paperclaw.config import save_settings
+from paperclaw import codex_cli, literature
+from paperclaw.config import LLM_PROVIDERS, provider_auth_kind, provider_requires_api_key, save_settings
 from paperclaw.server.models import SettingsUpdate, SettingsView
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
@@ -16,12 +16,20 @@ def _mask(key: str) -> str:
 
 
 def _view(settings) -> SettingsView:
+    auth_kind = provider_auth_kind(settings.provider)
+    auth_configured = (
+        bool(settings.api_key)
+        if provider_requires_api_key(settings.provider)
+        else codex_cli.check_readiness(run_doctor=False).logged_in
+    )
     return SettingsView(
         provider=settings.provider,
         baseUrl=settings.base_url,
         model=settings.model,
         apiKeyMasked=_mask(settings.api_key),
         hasKey=bool(settings.api_key),
+        authKind=auth_kind,
+        authConfigured=auth_configured,
         imageBaseUrl=settings.image_base_url,
         imageModel=settings.image_model,
         imageKeyMasked=_mask(settings.image_api_key),
@@ -40,8 +48,8 @@ def get_settings(request: Request):
 def put_settings(body: SettingsUpdate, request: Request):
     settings = request.app.state.settings
     if body.provider is not None:
-        if body.provider not in ("anthropic", "openai"):
-            raise HTTPException(status_code=422, detail="provider must be 'anthropic' or 'openai'")
+        if body.provider not in LLM_PROVIDERS:
+            raise HTTPException(status_code=422, detail="provider must be 'anthropic', 'openai', or 'codex'")
         settings.provider = body.provider
     if body.base_url is not None:
         settings.base_url = body.base_url.strip() or None

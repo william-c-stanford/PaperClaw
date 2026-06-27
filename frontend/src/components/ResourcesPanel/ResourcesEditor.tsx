@@ -10,6 +10,15 @@ const MODES: { id: string; label: string }[] = [
   { id: 'simulated', label: 'Simulated (no real run)' },
 ]
 
+function authLabel(res: IdeaResources): string {
+  const kind = res.llmAuthKind ?? 'api_key'
+  const configured = res.llmAuthConfigured ?? res.llmKeyConfigured
+  if (kind === 'codex_login') {
+    return configured ? 'Codex login configured' : 'Codex login MISSING'
+  }
+  return configured ? 'API key configured' : 'API key MISSING'
+}
+
 /**
  * Allocate an idea's experiment resources — the compute (mode + SSH GPU host) every experiment
  * of this idea uses, whether launched by Auto run or manually from the Hypotheses tab (NOT the
@@ -77,7 +86,7 @@ export default function ResourcesEditor({ ideaId }: { ideaId: string }) {
         <div className={s.resLlmRow}>
           {res.llmProvider} · {res.llmModel || '(default)'}
           {res.llmBaseUrl ? ` · ${res.llmBaseUrl}` : ''}
-          {' · '}{res.llmKeyConfigured ? 'API key configured' : 'API key MISSING'}
+          {' · '}{authLabel(res)}
         </div>
       </div>
     </div>

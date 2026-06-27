@@ -29,8 +29,8 @@ an idea, runs *real* experiments, and writes a cited, compiled paper.
 
 PaperClaw is an open-source autonomous research engine. It collapses the
 research lifecycle into one clean path and owns the control flow end-to-end: the hypothesis
-map, the experiment jobs, the memory, and the paper. Plug in any model (Anthropic SDK or any
-OpenAI-compatible endpoint) or an external headless coding agent.
+map, the experiment jobs, the memory, and the paper. Plug in any model (Anthropic SDK, any
+OpenAI-compatible endpoint, or a local ChatGPT-authenticated Codex CLI session) or an external headless coding agent.
 
 It ships as **one Python package** with a **FastAPI** backend and a **Vite + React**
 frontend that builds for two targets — **web** (served by the backend) and **Windows /
@@ -104,9 +104,9 @@ you can switch freely).
 
 ```yaml
 LLM:
-  provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint)
-  base_url: null                # null = provider default; set for a proxy / self-hosted
-  api_key: ""
+  provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint) | codex
+  base_url: null                # ignored for codex
+  api_key: ""                   # not used for codex
   model: claude-opus-4-8
 image_generation:               # optional — paper figures (empty key = use matplotlib/TikZ)
   base_url: null
@@ -150,13 +150,14 @@ cd frontend && npm install       # frontend (Node)
 
 **Configure** — open **⚙️ Settings** (gear, bottom-left):
 
-- **🔌 LLM** — provider, base URL (for proxies / self-hosted), model, and API key.
+- **🔌 LLM** — provider, base URL (for proxies / self-hosted), model, and API key or Codex login.
 - **📚 Academic search** — an OpenAlex API key for literature search (the domain survey, SOTA papers, and references). Optional, but without one OpenAlex may rate-limit anonymous requests and surveys return "Found 0 papers".
 - **🖼️ Image generation** — optional OpenAI-style image API for paper figures (falls back to matplotlib/TikZ when unset).
 - **🩺 Doctor** — one click checks the whole environment is ready (LLM, coding agent, LaTeX toolchain, image gen, OpenAlex).
 
 Keys are stored server-side in `saves/settings.yaml` (mode `600`) and never sent to the
-browser. Without a key the app still runs and replies with a configuration hint.
+browser. With `provider: codex`, PaperClaw invokes the installed `codex` CLI and uses the
+backend machine's ChatGPT login; it never reads or stores Codex tokens.
 
 **Use it** — click **⚡ Auto run** (sidebar for a fresh topic, or on an existing idea) to go
 from topic → paper; watch it live in the banner and browse the 🌳 Hypotheses and 📄 Paper
@@ -181,16 +182,17 @@ saved in the Settings UI persists and overrides the project-dir default. The env
 
 | Key | Purpose |
 |---|---|
-| `PAPERCLAW_PROVIDER` | `anthropic` \| `openai` (OpenAI-compatible) |
+| `PAPERCLAW_PROVIDER` | `anthropic` \| `openai` (OpenAI-compatible) \| `codex` |
 | `PAPERCLAW_BASE_URL` | proxy / self-hosted endpoint (optional) |
 | `PAPERCLAW_MODEL` | e.g. `claude-opus-4-8` |
-| `PAPERCLAW_API_KEY` | API key (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are provider-matched fallbacks) |
+| `PAPERCLAW_API_KEY` | API key for Anthropic/OpenAI-compatible providers (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are provider-matched fallbacks) |
 | `OPENALEX_API_KEY` | OpenAlex key for literature search (optional — avoids anonymous rate-limits) |
 | `PAPERCLAW_HOME` | workspace root (default: `./saves`) |
 
 ```bash
 # or persist them once:
 paperclaw settings set --provider anthropic --model claude-opus-4-8 --api-key sk-…
+paperclaw settings set --provider codex --model <codex-model>   # uses `codex login`
 paperclaw settings set --openalex-api-key oa-…   # literature search (optional)
 paperclaw doctor                 # check the env is ready (LLM, LaTeX, image gen, OpenAlex)
 ```
@@ -363,7 +365,7 @@ One Vite + React codebase ships as a web app, an Electron desktop app, and a ful
 <td valign="top">
 
 **🔌 Bring your own model**
-Anthropic via the official SDK, or any OpenAI-compatible endpoint. Default model `claude-opus-4-8`. Keys stay server-side.
+Anthropic via the official SDK, any OpenAI-compatible endpoint, or a local Codex CLI logged in with ChatGPT. API keys stay server-side; Codex tokens stay inside Codex.
 
 </td>
 </tr>
@@ -388,6 +390,12 @@ status` (and `paperclaw stop` / `paperclaw resume`). Auto runs started on an *ex
 **Is my API key safe?**
 Keys are stored server-side in `saves/settings.yaml` (mode `600`) and never sent to the
 browser or logged.
+
+**Can I use my Codex subscription instead of an OpenAI API key?**
+Yes for text model and idea/domain workspace chat: set `provider: codex`, install Codex, run
+`codex login` with ChatGPT on the backend machine, and set the model you want. OpenAlex
+literature search still needs its own OpenAlex key, and image generation still uses the image
+API settings.
 
 **Do I need a GPU?**
 No — small runs work on CPU. PaperClaw detects CPU/GPU/memory on the local host and any

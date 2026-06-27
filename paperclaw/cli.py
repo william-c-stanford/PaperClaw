@@ -235,8 +235,15 @@ def cmd_idea(client, args) -> None:
         print(f"compute: {r['experimentMode']}"
               + (f" → {r['sshTargetId']}" if r.get("sshTargetId") else "")
               + f"  | reference codebase: {'on' if r['useReferenceCodebase'] else 'off'}")
+        auth_kind = r.get("llmAuthKind") or "api_key"
+        auth_configured = bool(r.get("llmAuthConfigured", r.get("llmKeyConfigured")))
+        auth_text = (
+            "Codex login configured" if auth_configured else "Codex login MISSING"
+        ) if auth_kind == "codex_login" else (
+            "API key configured" if auth_configured else "API key MISSING"
+        )
         print(f"LLM: {r['llmProvider']} · {r['llmModel']} · "
-              f"{'key configured' if r['llmKeyConfigured'] else 'key MISSING'}")
+              f"{auth_text}")
         if r.get("sshTargets"):
             print("SSH hosts: " + ", ".join(f"{t['id']} ({t.get('host')})" for t in r["sshTargets"]))
 
@@ -558,7 +565,11 @@ def cmd_settings(client, args) -> None:
     print(f"provider: {out['provider']}")
     print(f"base_url: {out.get('baseUrl') or '(default)'}")
     print(f"model:    {out['model']}")
-    print(f"api_key:  {out['apiKeyMasked'] or '(not set)'}")
+    if out.get("authKind") == "codex_login":
+        print(f"auth:     {'Codex login configured' if out.get('authConfigured') else 'Codex login MISSING'}")
+        print(f"api_key:  {out['apiKeyMasked'] or '(not used for Codex)'}")
+    else:
+        print(f"api_key:  {out['apiKeyMasked'] or '(not set)'}")
     print(f"openalex: {out.get('openalexKeyMasked') or '(not set)'}")
 
 
@@ -877,7 +888,7 @@ def main() -> None:
     ssub = settings.add_subparsers(dest="action", required=True)
     ssub.add_parser("show")
     p = ssub.add_parser("set")
-    p.add_argument("--provider", choices=["anthropic", "openai"])
+    p.add_argument("--provider", choices=["anthropic", "openai", "codex"])
     p.add_argument("--base-url", dest="base_url")
     p.add_argument("--model")
     p.add_argument("--api-key", dest="api_key")

@@ -7,11 +7,14 @@
 #   env vars > .env (cwd) > .env ($PAPERCLAW_HOME) > $PAPERCLAW_HOME/settings.yaml > ./settings.yaml
 
 LLM:
-  provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint)
+  provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint) | codex
+                                # codex uses your local `codex login` ChatGPT subscription session.
   base_url: null                # null = the provider default; set for a proxy / self-hosted
+                                #   ignored for provider: codex
                                 #   e.g. https://api.openai.com/v1  or  http://localhost:11434/v1 (Ollama)
-  api_key: ""                   # your key (ANTHROPIC_API_KEY / OPENAI_API_KEY env vars also work)
-  model: claude-opus-4-8        # e.g. claude-opus-4-8, claude-sonnet-4-6, gpt-5.5, …
+  api_key: ""                   # your API key; not used for provider: codex
+                                # ANTHROPIC_API_KEY / OPENAI_API_KEY env vars also work for API providers
+  model: claude-opus-4-8        # e.g. claude-opus-4-8, claude-sonnet-4-6, or your Codex model
 
 # Optional — image API for paper figures (intro/method diagrams). Leave api_key empty to
 # disable (PaperClaw then falls back to matplotlib / TikZ figures).

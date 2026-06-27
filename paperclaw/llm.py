@@ -41,6 +41,9 @@ async def chat(
 
     `messages` is a list of {"role": "user"|"assistant", "content": str}.
     """
+    if settings.provider == "codex":
+        return await _chat_codex(settings, system, messages, max_tokens)
+
     if not settings.api_key:
         raise LLMNotConfigured("No API key configured — open Settings to add one.")
 
@@ -61,6 +64,11 @@ async def stream_chat(
         async for chunk in stream_chat(settings, system, messages):
             print(chunk, end="", flush=True)
     """
+    if settings.provider == "codex":
+        async for chunk in _stream_codex(settings, system, messages, max_tokens):
+            yield chunk
+        return
+
     if not settings.api_key:
         raise LLMNotConfigured("No API key configured — open Settings to add one.")
     if settings.provider == "anthropic":
@@ -109,6 +117,11 @@ async def stream_chat_thinking(
     Anthropic models that don't support thinking — yield only ``text`` events
     (best-effort fallback). Raises LLMNotConfigured / LLMError on failure.
     """
+    if settings.provider == "codex":
+        async for chunk in _stream_codex(settings, system, messages, max_tokens):
+            yield {"type": "text", "text": chunk}
+        return
+
     if not settings.api_key:
         raise LLMNotConfigured("No API key configured — open Settings to add one.")
     if settings.provider == "anthropic":
@@ -270,6 +283,59 @@ async def _chat_anthropic(
     return ChatResult(text=text, model=response.model)
 
 
+async def _chat_codex(
+    settings: LLMSettings, system: str, messages: list[dict[str, str]], max_tokens: int
+) -> ChatResult:
+    from paperclaw import codex_cli
+
+    try:
+        result = await codex_cli.chat(settings, system, messages, max_tokens=max_tokens)
+    except codex_cli.CodexNotConfigured as exc:
+        raise LLMNotConfigured(str(exc)) from exc
+    except codex_cli.CodexError as exc:
+        raise LLMError(str(exc)) from exc
+    return ChatResult(text=result.text, model=result.model)
+
+
+async def _stream_codex(
+    settings: LLMSettings, system: str, messages: list[dict[str, str]], max_tokens: int
+) -> AsyncIterator[str]:
+    from paperclaw import codex_cli
+
+    try:
+        async for chunk in codex_cli.stream_chat(settings, system, messages, max_tokens=max_tokens):
+            yield chunk
+    except codex_cli.CodexNotConfigured as exc:
+        raise LLMNotConfigured(str(exc)) from exc
+    except codex_cli.CodexError as exc:
+        raise LLMError(str(exc)) from exc
+
+
+async def chat_workspace(
+    settings: LLMSettings,
+    base_dir,
+    system: str,
+    messages: list[dict],
+) -> ChatResult:
+    """Run a workspace-rooted chat turn through Codex's native agent bridge."""
+    if settings.provider != "codex":
+        raise LLMError("Workspace bridge is only supported for the Codex provider.")
+
+    from paperclaw import codex_cli
+
+    try:
+        result = await codex_cli.workspace_chat(settings, base_dir, system, messages)
+    except codex_cli.CodexNotConfigured as exc:
+        raise LLMNotConfigured(str(exc)) from exc
+    except codex_cli.CodexError as exc:
+        raise LLMError(str(exc)) from exc
+    return ChatResult(
+        text=result.text,
+        model=result.model,
+        files_modified=result.files_modified,
+    )
+
+
 async def chat_with_tools(
     settings: LLMSettings,
     system: str,
@@ -288,6 +354,12 @@ async def chat_with_tools(
     Raises ``LLMNotConfigured`` / ``LLMError`` on failure.
     Only supported for the Anthropic provider; falls back to plain chat for others.
     """
+    if settings.provider == "codex":
+        raise LLMError(
+            "Codex provider does not support structured tool-call exchange here. "
+            "Use idea/domain workspace chat, or switch to Anthropic/OpenAI-compatible settings."
+        )
+
     if not settings.api_key:
         raise LLMNotConfigured("No API key configured — open Settings to add one.")
 
@@ -388,6 +460,12 @@ async def stream_chat_with_tools(
     Anthropic streams natively; OpenAI-compatible providers fall back to the
     non-streaming loop and emit the reply as a single delta.
     """
+    if settings.provider == "codex":
+        raise LLMError(
+            "Codex provider does not support structured tool-call exchange here. "
+            "Use idea/domain workspace chat, or switch to Anthropic/OpenAI-compatible settings."
+        )
+
     if not settings.api_key:
         raise LLMNotConfigured("No API key configured — open Settings to add one.")
 
