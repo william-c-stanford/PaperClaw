@@ -827,7 +827,15 @@ def test_settings_accepts_codex_without_api_key(tmp_path, monkeypatch):
     monkeypatch.setattr(
         codex_cli,
         "check_readiness",
-        lambda run_doctor=True: codex_cli.CodexReadiness(True, True, True, "ready"),
+        lambda run_doctor=True: codex_cli.CodexReadiness(
+            True,
+            True,
+            True,
+            "ready",
+            auth_method="chatgpt",
+            auth_configured=True,
+            runtime_healthy=True,
+        ),
     )
     client = make_client(tmp_path)
 
@@ -841,6 +849,93 @@ def test_settings_accepts_codex_without_api_key(tmp_path, monkeypatch):
     assert body["hasKey"] is False
     assert body["authKind"] == "codex_login"
     assert body["authConfigured"] is True
+    assert body["authMethod"] == "chatgpt"
+
+
+def test_settings_allows_empty_codex_model_to_use_codex_default(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(
+            True,
+            True,
+            True,
+            "ready",
+            auth_method="chatgpt",
+            auth_configured=True,
+            runtime_healthy=True,
+        ),
+    )
+    client = make_client(tmp_path)
+
+    body = client.put(
+        "/api/settings",
+        json={"provider": "codex", "model": "", "apiKey": ""},
+    ).json()
+
+    assert body["provider"] == "codex"
+    assert body["model"] == ""
+    assert body["authConfigured"] is True
+
+
+def test_settings_reports_codex_api_key_auth_as_unconfigured(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(
+            True,
+            False,
+            False,
+            "Codex is logged in with API-key auth",
+            "run `codex logout`",
+            auth_method="api_key",
+            auth_configured=False,
+            runtime_healthy=True,
+        ),
+    )
+    client = make_client(tmp_path)
+
+    body = client.put("/api/settings", json={"provider": "codex"}).json()
+
+    assert body["authConfigured"] is False
+    assert body["authMethod"] == "api_key"
+    assert body["hasKey"] is False
+    assert "API-key auth" in body["authDetail"]
+
+
+def test_settings_reports_codex_env_token_candidate(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(
+            True,
+            False,
+            False,
+            "CODEX_ACCESS_TOKEN is set",
+            auth_method="env_access_token",
+            auth_configured=False,
+            auth_candidate=True,
+            runtime_healthy=None,
+        ),
+    )
+    client = make_client(tmp_path)
+
+    body = client.put("/api/settings", json={"provider": "codex"}).json()
+
+    assert body["authConfigured"] is False
+    assert body["authMethod"] == "env_access_token"
+    assert body["authDetail"] == "CODEX_ACCESS_TOKEN is set"
+
+    idea_id = client.post("/api/ideas", json={"title": "Codex resources"}).json()["id"]
+    resources = client.get(f"/api/ideas/{idea_id}/resources").json()
+    assert resources["llmAuthMethod"] == "env_access_token"
+    assert resources["llmAuthDetail"] == "CODEX_ACCESS_TOKEN is set"
 
 
 def test_settings_openalex_key_masked_and_applied(tmp_path):
@@ -956,7 +1051,55 @@ def test_doctor_reports_codex_missing_binary(tmp_path, monkeypatch):
     assert "OPENAI_API_KEY" not in llm_check.get("hint", "")
 
 
+def test_doctor_reports_codex_runtime_issue_separate_from_auth(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(
+            True,
+            True,
+            False,
+            "Codex auth configured with ChatGPT-managed credentials",
+            "run `codex doctor --json`",
+            auth_method="chatgpt",
+            auth_configured=True,
+            runtime_healthy=False,
+            runtime_detail="runtime issue: network.provider_reachability: ChatGPT base URL connect failed",
+        ),
+    )
+    client = make_client(tmp_path)
+    client.put("/api/settings", json={"provider": "codex", "model": "codex-test-model"})
+
+    settings = client.get("/api/settings").json()
+    assert settings["authConfigured"] is True
+    assert settings["runtimeHealthy"] is False
+
+    body = client.get("/api/doctor").json()
+    llm_check = next(c for c in body["checks"] if c["key"] == "llm")
+    assert llm_check["status"] == "fail"
+    assert "auth configured" in llm_check["detail"]
+    assert "network.provider_reachability" in llm_check["detail"]
+
+
 def test_codex_workspace_chat_uses_workspace_bridge(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(
+            True,
+            True,
+            True,
+            "ready",
+            auth_method="chatgpt",
+            auth_configured=True,
+            runtime_healthy=True,
+        ),
+    )
+
     async def fake_workspace(settings, base_dir, system, messages):
         assert settings.provider == "codex"
         assert base_dir.is_dir()

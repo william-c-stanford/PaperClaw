@@ -47,7 +47,9 @@ and should not share the package set from an existing desktop or notebook enviro
 
 The core setting. PaperClaw talks to **Anthropic** (official SDK), **any OpenAI-compatible**
 endpoint (set `base_url` for a proxy / self-hosted / gateway), or the local **Codex CLI**
-using your ChatGPT-authenticated Codex session. Default model `claude-opus-4-8`.
+using your ChatGPT-authenticated Codex session. Default model for API providers is
+`claude-opus-4-8`; for `provider: codex`, leave `LLM.model` empty to let Codex use its own
+configured default, or set a Codex model explicitly.
 
 ```yaml
 # settings.yaml
@@ -55,8 +57,8 @@ LLM:
   provider: anthropic        # anthropic | openai | codex
   base_url: null             # e.g. https://api.openai.com/v1, http://localhost:11434/v1 (Ollama)
                              # ignored for provider: codex
-  api_key: ""                # not used for provider: codex
-  model: claude-opus-4-8
+  api_key: ""                # API providers only; not used for provider: codex
+  model: claude-opus-4-8     # for codex, use "" for Codex default or e.g. gpt-5.5
 ```
 
 ```bash
@@ -71,12 +73,24 @@ OpenAI API key for PaperClaw text calls:
 
 ```bash
 codex login                                      # choose ChatGPT sign-in
-paperclaw settings set --provider codex --model <codex-model>
+codex login status                              # optional sanity check
+paperclaw settings set --provider codex --model gpt-5.5
 paperclaw doctor
 ```
 
 With `provider: codex`, PaperClaw invokes `codex exec` locally. It passes the configured
-`LLM.model`, uses Codex's own login, and never reads, stores, or displays ChatGPT/Codex tokens.
+`LLM.model` only when you set one, uses Codex's own login, and never reads, stores, or displays
+ChatGPT/Codex tokens. `codex login --with-api-key` is usage-billed OpenAI Platform auth; it is
+not treated as Codex subscription auth by PaperClaw. If you are on a headless machine, use
+`codex login --device-auth` or complete Codex login on the backend machine before starting
+PaperClaw.
+
+For trusted non-interactive automation on a ChatGPT Business/Enterprise workspace, you can
+provide a Codex/ChatGPT access token in `CODEX_ACCESS_TOKEN` or persist it with
+`codex login --with-access-token`. PaperClaw treats the environment variable as an auth
+candidate because the token cannot be verified safely without starting Codex; `paperclaw doctor`
+and the first Codex run surface the final runtime result.
+
 Text-only calls run in a temporary read-only workspace; idea/domain workspace chat runs in the
 selected workspace and reports changed files by snapshot. Structured Anthropic/OpenAI-style
 tool-call exchange remains API-provider-only.
@@ -89,8 +103,9 @@ the `image_generation` settings.
 |---|---|
 | `PAPERCLAW_PROVIDER` | `anthropic` \| `openai` \| `codex` |
 | `PAPERCLAW_BASE_URL` | proxy / self-hosted endpoint |
-| `PAPERCLAW_MODEL` | model id |
+| `PAPERCLAW_MODEL` | model id; omit for Codex's default |
 | `PAPERCLAW_API_KEY` | API key for Anthropic/OpenAI-compatible providers (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are provider-matched fallbacks) |
+| `CODEX_ACCESS_TOKEN` | optional Codex/ChatGPT access token candidate for trusted automation |
 
 > Without a key the app still runs and replies with a configuration hint — nothing crashes.
 
@@ -202,6 +217,11 @@ generation. Each check is `ok | warn | fail`; only a `fail` blocks readiness.
 ```bash
 paperclaw doctor        # exit 0 when ready, 1 otherwise
 ```
+
+For `provider: codex`, the doctor uses Codex CLI diagnostics (`codex doctor --json` when
+available, with `codex login status` as a fallback) and reports auth method separately from
+runtime health. A ChatGPT login or Codex access token is accepted; API-key Codex login is
+reported as the wrong mode for subscription use.
 
 In the web UI: **⚙️ Settings → 🩺 Doctor**.
 

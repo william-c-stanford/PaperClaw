@@ -100,6 +100,10 @@ export interface IdeaResources {
   llmKeyConfigured: boolean
   llmAuthKind?: 'api_key' | 'codex_login' | string
   llmAuthConfigured?: boolean
+  llmAuthMethod?: string
+  llmAuthDetail?: string
+  llmRuntimeHealthy?: boolean | null
+  llmRuntimeDetail?: string
 }
 export interface IdeaResourcesUpdate {
   experimentMode?: string | null
@@ -196,6 +200,10 @@ export interface SettingsView {
   hasKey: boolean
   authKind?: 'api_key' | 'codex_login' | string
   authConfigured?: boolean
+  authMethod?: string
+  authDetail?: string
+  runtimeHealthy?: boolean | null
+  runtimeDetail?: string
   imageBaseUrl?: string | null
   imageModel?: string | null
   imageKeyMasked?: string

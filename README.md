@@ -106,8 +106,8 @@ you can switch freely).
 LLM:
   provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint) | codex
   base_url: null                # ignored for codex
-  api_key: ""                   # not used for codex
-  model: claude-opus-4-8
+  api_key: ""                   # API providers only; not used for codex
+  model: claude-opus-4-8        # for codex, leave empty for the Codex default or set e.g. gpt-5.5
 image_generation:               # optional — paper figures (empty key = use matplotlib/TikZ)
   base_url: null
   api_key: ""
@@ -163,7 +163,9 @@ project packages. Do not create it with `--system-site-packages`.
 
 Keys are stored server-side in `saves/settings.yaml` (mode `600`) and never sent to the
 browser. With `provider: codex`, PaperClaw invokes the installed `codex` CLI and uses the
-backend machine's ChatGPT login; it never reads or stores Codex tokens.
+backend machine's ChatGPT login; it never reads, stores, or displays Codex tokens. API-key
+Codex login (`codex login --with-api-key`) is billed through the OpenAI Platform and is not
+accepted for PaperClaw's Codex subscription provider.
 
 **Use it** — click **⚡ Auto run** (sidebar for a fresh topic, or on an existing idea) to go
 from topic → paper; watch it live in the banner and browse the 🌳 Hypotheses and 📄 Paper
@@ -193,15 +195,18 @@ saved in the Settings UI persists and overrides the project-dir default. The env
 |---|---|
 | `PAPERCLAW_PROVIDER` | `anthropic` \| `openai` (OpenAI-compatible) \| `codex` |
 | `PAPERCLAW_BASE_URL` | proxy / self-hosted endpoint (optional) |
-| `PAPERCLAW_MODEL` | e.g. `claude-opus-4-8` |
+| `PAPERCLAW_MODEL` | model id; omit for Codex's default, or set a Codex model such as `gpt-5.5` |
 | `PAPERCLAW_API_KEY` | API key for Anthropic/OpenAI-compatible providers (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are provider-matched fallbacks) |
+| `CODEX_ACCESS_TOKEN` | optional Codex/ChatGPT access token candidate for trusted automation; validated by Codex at runtime |
 | `OPENALEX_API_KEY` | OpenAlex key for literature search (optional — avoids anonymous rate-limits) |
 | `PAPERCLAW_HOME` | workspace root (default: `./saves`) |
 
 ```bash
 # or persist them once:
 paperclaw settings set --provider anthropic --model claude-opus-4-8 --api-key sk-…
-paperclaw settings set --provider codex --model <codex-model>   # uses `codex login`
+codex login                                      # choose ChatGPT sign-in
+codex login status                              # optional sanity check
+paperclaw settings set --provider codex --model gpt-5.5
 paperclaw settings set --openalex-api-key oa-…   # literature search (optional)
 paperclaw doctor                 # check the env is ready (LLM, LaTeX, image gen, OpenAlex)
 ```
@@ -405,9 +410,13 @@ browser or logged.
 
 **Can I use my Codex subscription instead of an OpenAI API key?**
 Yes for text model and idea/domain workspace chat: set `provider: codex`, install Codex, run
-`codex login` with ChatGPT on the backend machine, and set the model you want. OpenAlex
-literature search still needs its own OpenAlex key, and image generation still uses the image
-API settings.
+`codex login` with ChatGPT on the backend machine, and optionally set the model you want. If
+you leave `LLM.model` empty, Codex uses its configured default. `codex login --with-api-key`
+is API-billed auth and PaperClaw reports it as the wrong auth mode for `provider: codex`.
+For trusted non-interactive runs, `CODEX_ACCESS_TOKEN` is accepted as an unverified candidate
+and Codex validates it when a run starts. OpenAlex literature search still needs its own
+OpenAlex key, and image generation still uses the image API settings. PaperClaw never reads
+`~/.codex/auth.json`; it only asks `codex` to run.
 
 **Do I need a GPU?**
 No — small runs work on CPU. PaperClaw detects CPU/GPU/memory on the local host and any

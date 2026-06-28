@@ -1428,12 +1428,15 @@ def environment_report(settings: LLMSettings, home=None) -> DoctorReport:
     where = f"{settings.provider} · {model}"
     if settings.provider == "codex":
         ready = codex_cli.check_readiness(run_doctor=True)
-        status = "ok" if ready.installed and ready.logged_in and ready.healthy else "fail"
+        status = "ok" if ready.installed and ready.subscription_auth_configured and ready.healthy else "fail"
+        detail = f"{where} — {ready.detail}"
+        if ready.subscription_auth_configured and not ready.runtime_ok and ready.runtime_detail:
+            detail = f"{detail}; {ready.runtime_detail}"
         checks.append(EnvCheck(
             key="llm",
             label="Codex CLI",
             status=status,
-            detail=f"{where} — {ready.detail}",
+            detail=detail,
             hint=None if status == "ok" else ready.hint,
         ))
     elif settings.api_key:
@@ -1818,6 +1821,7 @@ def get_idea_resources_view(store: Store, settings: LLMSettings, idea_id: str) -
         raise NotFound("Idea not found")
     cfg = store.effective_run_config(idea_id)
     alloc = store.get_idea_resources(idea_id) or {}
+    ready = codex_cli.check_readiness(run_doctor=False) if settings.provider == "codex" else None
     return {
         "ideaId": idea_id,
         "experimentMode": cfg.experiment_mode,
@@ -1827,13 +1831,17 @@ def get_idea_resources_view(store: Store, settings: LLMSettings, idea_id: str) -
         "llmProvider": settings.provider,
         "llmModel": settings.model,
         "llmBaseUrl": settings.base_url,
-        "llmKeyConfigured": bool(settings.api_key),
+        "llmKeyConfigured": bool(settings.api_key) if provider_requires_api_key(settings.provider) else False,
         "llmAuthKind": provider_auth_kind(settings.provider),
         "llmAuthConfigured": (
             bool(settings.api_key)
             if provider_requires_api_key(settings.provider)
-            else codex_cli.check_readiness(run_doctor=False).logged_in
+            else bool(ready and ready.subscription_auth_configured)
         ),
+        "llmAuthMethod": ready.auth_method if ready else provider_auth_kind(settings.provider),
+        "llmAuthDetail": ready.detail if ready else "",
+        "llmRuntimeHealthy": ready.runtime_healthy if ready else None,
+        "llmRuntimeDetail": ready.runtime_detail if ready else "",
     }
 
 

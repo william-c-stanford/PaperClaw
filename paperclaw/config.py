@@ -34,6 +34,13 @@ def provider_api_key_env(provider: str | None) -> str | None:
     return None
 
 
+def normalize_model_for_provider(provider: str | None, model: str | None) -> str:
+    value = (model or "").strip()
+    if normalize_provider(provider) == "codex" and value == DEFAULT_MODEL:
+        return ""
+    return value
+
+
 def paperclaw_home() -> Path:
     """Workspace root: $PAPERCLAW_HOME, else ``./saves`` (relative to the working dir).
 
@@ -214,6 +221,7 @@ def load_settings(home: Path) -> LLMSettings:
     # OpenAlex key: env (or .env) overrides the saved setting, like the LLM key.
     if env.get("OPENALEX_API_KEY"):
         settings.openalex_api_key = env["OPENALEX_API_KEY"]
+    settings.model = normalize_model_for_provider(settings.provider, settings.model)
 
     # Push the resolved OpenAlex key into the literature client so every entry
     # point (server / CLI / detached children all call load_settings) uses it.

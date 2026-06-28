@@ -14,7 +14,9 @@ function authLabel(res: IdeaResources): string {
   const kind = res.llmAuthKind ?? 'api_key'
   const configured = res.llmAuthConfigured ?? res.llmKeyConfigured
   if (kind === 'codex_login') {
-    return configured ? 'Codex login configured' : 'Codex login MISSING'
+    if (res.llmAuthMethod === 'env_access_token') return 'Codex env token candidate'
+    if (res.llmAuthMethod === 'api_key') return 'Codex API-key auth (wrong mode)'
+    return configured ? 'Codex subscription auth configured' : 'Codex subscription auth MISSING'
   }
   return configured ? 'API key configured' : 'API key MISSING'
 }
@@ -88,6 +90,10 @@ export default function ResourcesEditor({ ideaId }: { ideaId: string }) {
           {res.llmBaseUrl ? ` · ${res.llmBaseUrl}` : ''}
           {' · '}{authLabel(res)}
         </div>
+        {res.llmAuthDetail && <div className={s.resLlmRow}>{res.llmAuthDetail}</div>}
+        {res.llmRuntimeHealthy === false && res.llmRuntimeDetail && (
+          <div className={s.resLlmRow}>{res.llmRuntimeDetail}</div>
+        )}
       </div>
     </div>
   )

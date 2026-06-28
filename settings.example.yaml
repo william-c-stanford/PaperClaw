@@ -9,12 +9,16 @@
 LLM:
   provider: anthropic           # anthropic | openai (any OpenAI-compatible endpoint) | codex
                                 # codex uses your local `codex login` ChatGPT subscription session.
+                                # Use `codex login --device-auth` for headless login, or
+                                # CODEX_ACCESS_TOKEN for trusted automation.
   base_url: null                # null = the provider default; set for a proxy / self-hosted
                                 #   ignored for provider: codex
                                 #   e.g. https://api.openai.com/v1  or  http://localhost:11434/v1 (Ollama)
-  api_key: ""                   # your API key; not used for provider: codex
+  api_key: ""                   # your API key; API providers only, not used for provider: codex
                                 # ANTHROPIC_API_KEY / OPENAI_API_KEY env vars also work for API providers
-  model: claude-opus-4-8        # e.g. claude-opus-4-8, claude-sonnet-4-6, or your Codex model
+  model: claude-opus-4-8        # e.g. claude-opus-4-8 or claude-sonnet-4-6.
+                                # For provider: codex, leave empty for the Codex default
+                                # or set a Codex model such as gpt-5.5.
 
 # Optional — image API for paper figures (intro/method diagrams). Leave api_key empty to
 # disable (PaperClaw then falls back to matplotlib / TikZ figures).

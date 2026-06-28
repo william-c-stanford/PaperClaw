@@ -6,7 +6,8 @@ for each one (the CLI mirrors every web feature — see the [main README](../REA
 
 > **Start the web UI:** `./dev.sh` from the repo root (backend `:8230` + frontend `:5173`),
 > then open <http://localhost:5173>. Configure your provider/model/keys in **⚙️ Settings**
-> or a [`settings.yaml`](../settings.example.yaml).
+> or a [`settings.yaml`](../settings.example.yaml). For `provider: codex`, run
+> `codex login` with ChatGPT on the backend machine first; OpenAlex still has its own key.
 
 ### At a glance
 

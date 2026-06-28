@@ -19,6 +19,7 @@ from paperclaw.config import (
     LLM_PROVIDERS,
     paperclaw_home,
     load_settings,
+    normalize_model_for_provider,
     provider_auth_kind,
     provider_requires_api_key,
     save_settings,
@@ -316,14 +317,18 @@ class LocalClient:
         oa = s.openalex_api_key
         oa_masked = f"{oa[:4]}…{oa[-4:]}" if len(oa) > 8 else "•" * len(oa)
         auth_kind = provider_auth_kind(s.provider)
+        requires_key = provider_requires_api_key(s.provider)
+        ready = codex_cli.check_readiness(run_doctor=True) if s.provider == "codex" else None
         auth_configured = (
-            bool(s.api_key)
-            if provider_requires_api_key(s.provider)
-            else codex_cli.check_readiness(run_doctor=False).logged_in
+            bool(s.api_key) if requires_key else bool(ready and ready.subscription_auth_configured)
         )
         return {"provider": s.provider, "baseUrl": s.base_url, "model": s.model,
-                "apiKeyMasked": masked, "hasKey": bool(s.api_key),
+                "apiKeyMasked": masked if requires_key else "", "hasKey": bool(s.api_key) if requires_key else False,
                 "authKind": auth_kind, "authConfigured": auth_configured,
+                "authMethod": ready.auth_method if ready else auth_kind,
+                "authDetail": ready.detail if ready else "",
+                "runtimeHealthy": ready.runtime_healthy if ready else None,
+                "runtimeDetail": ready.runtime_detail if ready else "",
                 "openalexKeyMasked": oa_masked, "hasOpenalexKey": bool(oa)}
     def settings_set(self, provider=None, base_url=None, model=None, api_key=None,
                      image_base_url=None, image_model=None, image_api_key=None,
@@ -335,7 +340,8 @@ class LocalClient:
                 raise ClientError("provider must be one of: " + ", ".join(LLM_PROVIDERS))
             s.provider = provider
         if base_url is not None: s.base_url = base_url or None
-        if model: s.model = model
+        if model is not None: s.model = model
+        s.model = normalize_model_for_provider(s.provider, s.model)
         if api_key: s.api_key = api_key
         if image_base_url is not None: s.image_base_url = image_base_url or None
         if image_model is not None: s.image_model = image_model or None
@@ -604,7 +610,7 @@ class RemoteClient:
         body = {}
         if provider: body["provider"] = provider
         if base_url is not None: body["baseUrl"] = base_url
-        if model: body["model"] = model
+        if model is not None: body["model"] = model
         if api_key: body["apiKey"] = api_key
         if image_base_url is not None: body["imageBaseUrl"] = image_base_url
         if image_model is not None: body["imageModel"] = image_model

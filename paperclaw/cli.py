@@ -566,8 +566,18 @@ def cmd_settings(client, args) -> None:
     print(f"base_url: {out.get('baseUrl') or '(default)'}")
     print(f"model:    {out['model']}")
     if out.get("authKind") == "codex_login":
-        print(f"auth:     {'Codex login configured' if out.get('authConfigured') else 'Codex login MISSING'}")
-        print(f"api_key:  {out['apiKeyMasked'] or '(not used for Codex)'}")
+        method = out.get("authMethod") or "unknown"
+        if method == "env_access_token":
+            auth = "Codex env token candidate (unverified)"
+        else:
+            auth = "Codex subscription auth configured" if out.get("authConfigured") else "Codex subscription auth MISSING"
+        print(f"auth:     {auth}")
+        print(f"method:   {method}")
+        if out.get("authDetail"):
+            print(f"detail:   {out['authDetail']}")
+        if out.get("runtimeHealthy") is False and out.get("runtimeDetail"):
+            print(f"runtime:  {out['runtimeDetail']}")
+        print("api_key:  (not used for Codex)")
     else:
         print(f"api_key:  {out['apiKeyMasked'] or '(not set)'}")
     print(f"openalex: {out.get('openalexKeyMasked') or '(not set)'}")

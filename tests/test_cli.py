@@ -206,6 +206,31 @@ def test_codex_provider_does_not_use_openai_key_fallback(tmp_path, monkeypatch):
     assert settings.api_key == ""
 
 
+def test_codex_provider_clears_inherited_anthropic_default_model(tmp_path, monkeypatch):
+    monkeypatch.setenv("PAPERCLAW_PROVIDER", "codex")
+
+    settings = load_settings(tmp_path)
+
+    assert settings.provider == "codex"
+    assert settings.model == ""
+
+
+def test_local_client_can_clear_codex_model_for_default(tmp_path, monkeypatch):
+    from paperclaw import codex_cli
+
+    monkeypatch.setattr(
+        codex_cli,
+        "check_readiness",
+        lambda run_doctor=True: codex_cli.CodexReadiness(True, True, True, "ready"),
+    )
+    client = LocalClient()
+
+    out = client.settings_set(provider="codex", model="")
+
+    assert out["provider"] == "codex"
+    assert out["model"] == ""
+
+
 def test_local_client_codex_settings_and_resources(tmp_path, monkeypatch):
     from paperclaw import codex_cli
 
@@ -220,6 +245,7 @@ def test_local_client_codex_settings_and_resources(tmp_path, monkeypatch):
     assert out["provider"] == "codex"
     assert out["authKind"] == "codex_login"
     assert out["authConfigured"] is True
+    assert out["authMethod"] == "unknown"
     assert out["hasKey"] is False
 
     idea = client.idea_create("Codex idea")

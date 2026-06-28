@@ -41,6 +41,13 @@ function machineSummary(m: HardwareInfo): string {
   return bits.join(' · ')
 }
 
+function codexAuthSummary(settings: SettingsView | null): string {
+  if (!settings || settings.provider !== 'codex') return 'Use `codex login` with ChatGPT on the backend machine.'
+  if (settings.authMethod === 'env_access_token') return 'CODEX_ACCESS_TOKEN set — Codex will verify it when a run starts.'
+  if (settings.authMethod === 'api_key') return 'Codex is using API-key auth, not subscription auth.'
+  return settings.authConfigured ? 'Codex subscription auth configured' : 'Codex subscription auth MISSING'
+}
+
 export default function SettingsModal({ onClose }: Props) {
   const [section, setSection] = useState<Section>('llm')
 
@@ -92,6 +99,7 @@ export default function SettingsModal({ onClose }: Props) {
     setProvider(p)
     if (p === 'codex') {
       setBaseUrl('')
+      setModel('')
       return
     }
     const d = PROVIDER_DEFAULTS[p]
@@ -218,11 +226,13 @@ export default function SettingsModal({ onClose }: Props) {
                 {provider === 'codex' ? (
                   <div className={s.field}>
                     <label className={s.label}>Auth</label>
-                    <span className={s.hint}>
-                      {loaded?.provider === 'codex' && loaded.authConfigured
-                        ? 'Codex login configured'
-                        : 'Use `codex login` with ChatGPT on the backend machine.'}
-                    </span>
+                    <span className={s.hint}>{codexAuthSummary(loaded)}</span>
+                    {loaded?.provider === 'codex' && loaded.authDetail && (
+                      <span className={s.hint}>{loaded.authDetail}</span>
+                    )}
+                    {loaded?.provider === 'codex' && loaded.runtimeHealthy === false && loaded.runtimeDetail && (
+                      <span className={`${s.hint} ${s.statusErr}`}>{loaded.runtimeDetail}</span>
+                    )}
                   </div>
                 ) : (
                   <div className={s.field}>
